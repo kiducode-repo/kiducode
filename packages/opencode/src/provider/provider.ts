@@ -419,9 +419,9 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
-            "X-Source": "opencode",
+            "HTTP-Referer": "https://kiducode.com/",
+            "X-Title": "kiducode",
+            "X-Source": "kiducode",
           },
         },
       }),
@@ -430,8 +430,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
+            "HTTP-Referer": "https://kiducode.com/",
+            "X-Title": "kiducode",
           },
         },
       }),
@@ -440,9 +440,9 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: provider.source === "config",
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
-            "X-BILLING-INVOKE-ORIGIN": "OpenCode",
+            "HTTP-Referer": "https://kiducode.com/",
+            "X-Title": "kiducode",
+            "X-BILLING-INVOKE-ORIGIN": "KiduCode",
           },
         },
       }),
@@ -451,8 +451,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "http-referer": "https://opencode.ai/",
-            "x-title": "opencode",
+            "http-referer": "https://kiducode.com/",
+            "x-title": "kiducode",
           },
         },
       }),
@@ -557,8 +557,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
+            "HTTP-Referer": "https://kiducode.com/",
+            "X-Title": "kiducode",
           },
         },
       }),
@@ -843,8 +843,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
+            "HTTP-Referer": "https://kiducode.com/",
+            "X-Title": "kiducode",
           },
         },
       }),

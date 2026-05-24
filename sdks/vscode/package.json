@@ -1,12 +1,12 @@
 {
-  "name": "opencode",
-  "displayName": "opencode",
-  "description": "opencode for VS Code",
+  "name": "kiducode",
+  "displayName": "KiduCode",
+  "description": "KiduCode for VS Code",
   "version": "1.15.10",
   "publisher": "sst-dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anomalyco/opencode"
+    "url": "https://github.com/kiducode/kiducode"
   },
   "license": "MIT",
   "icon": "images/icon.png",
@@ -25,54 +25,54 @@
   "contributes": {
     "commands": [
       {
-        "command": "opencode.openTerminal",
-        "title": "Open opencode",
+        "command": "kiducode.openTerminal",
+        "title": "Open KiduCode",
         "icon": {
           "light": "images/button-dark.svg",
           "dark": "images/button-light.svg"
         }
       },
       {
-        "command": "opencode.openNewTerminal",
-        "title": "Open opencode in new tab",
+        "command": "kiducode.openNewTerminal",
+        "title": "Open KiduCode in new tab",
         "icon": {
           "light": "images/button-dark.svg",
           "dark": "images/button-light.svg"
         }
       },
       {
-        "command": "opencode.addFilepathToTerminal",
+        "command": "kiducode.addFilepathToTerminal",
         "title": "Add Filepath to Terminal"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "opencode.openNewTerminal",
+          "command": "kiducode.openNewTerminal",
           "group": "navigation"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "opencode.openTerminal",
-        "title": "Run opencode",
+        "command": "kiducode.openTerminal",
+        "title": "Run KiduCode",
         "key": "cmd+escape",
         "mac": "cmd+escape",
         "win": "ctrl+escape",
         "linux": "ctrl+escape"
       },
       {
-        "command": "opencode.openNewTerminal",
-        "title": "Run opencode",
+        "command": "kiducode.openNewTerminal",
+        "title": "Run KiduCode",
         "key": "cmd+shift+escape",
         "mac": "cmd+shift+escape",
         "win": "ctrl+shift+escape",
         "linux": "ctrl+shift+escape"
       },
       {
-        "command": "opencode.addFilepathToTerminal",
-        "title": "opencode: Insert At-Mentioned",
+        "command": "kiducode.addFilepathToTerminal",
+        "title": "KiduCode: Insert At-Mentioned",
         "key": "cmd+alt+k",
         "mac": "cmd+alt+k",
         "win": "ctrl+alt+K",

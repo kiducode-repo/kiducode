@@ -21,13 +21,13 @@ async function signWindows(configuration: { path: string }) {
 }
 
 const channel = (() => {
-  const raw = process.env.OPENCODE_CHANNEL
+  const raw = process.env.KIDUCODE_CHANNEL ?? process.env.OPENCODE_CHANNEL
   if (raw === "dev" || raw === "beta" || raw === "prod") return raw
   return "dev"
 })()
 
 const getBase = (): Configuration => ({
-  artifactName: "opencode-desktop-${os}-${arch}.${ext}",
+  artifactName: "kiducode-desktop-${os}-${arch}.${ext}",
   directories: {
     output: "dist",
     buildResources: "resources",
@@ -54,8 +54,8 @@ const getBase = (): Configuration => ({
     sign: true,
   },
   protocols: {
-    name: "OpenCode",
-    schemes: ["opencode"],
+    name: "KiduCode",
+    schemes: ["kiducode"],
   },
   win: {
     icon: `resources/icons/icon.ico`,
@@ -85,29 +85,29 @@ function getConfig() {
     case "dev": {
       return {
         ...base,
-        appId: "ai.opencode.desktop.dev",
-        productName: "OpenCode Dev",
-        rpm: { packageName: "opencode-dev" },
+        appId: "com.kiducode.desktop.dev",
+        productName: "KiduCode Dev",
+        rpm: { packageName: "kiducode-dev" },
       }
     }
     case "beta": {
       return {
         ...base,
-        appId: "ai.opencode.desktop.beta",
-        productName: "OpenCode Beta",
-        protocols: { name: "OpenCode Beta", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode-beta", channel: "latest" },
-        rpm: { packageName: "opencode-beta" },
+        appId: "com.kiducode.desktop.beta",
+        productName: "KiduCode Beta",
+        protocols: { name: "KiduCode Beta", schemes: ["kiducode"] },
+        publish: { provider: "github", owner: "kiducode", repo: "kiducode", channel: "latest" },
+        rpm: { packageName: "kiducode-beta" },
       }
     }
     case "prod": {
       return {
         ...base,
-        appId: "ai.opencode.desktop",
-        productName: "OpenCode",
-        protocols: { name: "OpenCode", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode", channel: "latest" },
-        rpm: { packageName: "opencode" },
+        appId: "com.kiducode.desktop",
+        productName: "KiduCode",
+        protocols: { name: "KiduCode", schemes: ["kiducode"] },
+        publish: { provider: "github", owner: "kiducode", repo: "kiducode", channel: "latest" },
+        rpm: { packageName: "kiducode" },
       }
     }
   }

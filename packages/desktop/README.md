@@ -1,6 +1,6 @@
-# OpenCode Desktop
+# KiduCode Desktop
 
-The OpenCode Desktop app, built with Electron.
+The KiduCode Desktop app, built with Electron.
 
 ## Development
 

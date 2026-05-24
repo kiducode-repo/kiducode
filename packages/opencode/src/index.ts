@@ -30,8 +30,6 @@ import { WebCommand } from "./cli/cmd/web"
 import { PrCommand } from "./cli/cmd/pr"
 import { SessionCommand } from "./cli/cmd/session"
 import { DbCommand } from "./cli/cmd/db"
-import path from "path"
-import { Global } from "@opencode-ai/core/global"
 import { JsonMigration } from "@/storage/json-migration"
 import { Database } from "@/storage/db"
 import { errorMessage } from "./util/error"
@@ -57,9 +55,16 @@ process.on("uncaughtException", (e) => {
 
 const args = hideBin(process.argv)
 
+function applyKiducodeEnvAliases() {
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!key.startsWith("KIDUCODE_") || value === undefined) continue
+    process.env[`OPENCODE_${key.slice("KIDUCODE_".length)}`] ??= value
+  }
+}
+
 function show(out: string) {
   const text = out.trimStart()
-  if (!text.startsWith("opencode ")) {
+  if (!text.startsWith("kiducode ")) {
     process.stderr.write(UI.logo() + EOL + EOL)
     process.stderr.write(text)
     return
@@ -69,7 +74,7 @@ function show(out: string) {
 
 const cli = yargs(args)
   .parserConfiguration({ "populate--": true })
-  .scriptName("opencode")
+  .scriptName("kiducode")
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -89,7 +94,10 @@ const cli = yargs(args)
     type: "boolean",
   })
   .middleware(async (opts) => {
+    applyKiducodeEnvAliases()
+
     if (opts.pure) {
+      process.env.KIDUCODE_PURE = "1"
       process.env.OPENCODE_PURE = "1"
     }
 
@@ -106,17 +114,19 @@ const cli = yargs(args)
     Heap.start()
 
     process.env.AGENT = "1"
+    process.env.KIDUCODE = "1"
     process.env.OPENCODE = "1"
+    process.env.KIDUCODE_PID = String(process.pid)
     process.env.OPENCODE_PID = String(process.pid)
 
-    Log.Default.info("opencode", {
+    Log.Default.info("kiducode", {
       version: InstallationVersion,
       args: process.argv.slice(2),
       process_role: processMetadata.processRole,
       run_id: processMetadata.runID,
     })
 
-    const marker = path.join(Global.Path.data, "opencode.db")
+    const marker = Database.getPath()
     if (!(await Filesystem.exists(marker))) {
       const tty = process.stderr.isTTY
       process.stderr.write("Performing one time database migration, may take a few minutes..." + EOL)

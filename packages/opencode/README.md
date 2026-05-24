@@ -1,15 +1,14 @@
-# js
+# KiduCode CLI
 
-To install dependencies:
+This package contains the KiduCode CLI, TUI, local API server, tools, session runtime, and storage layer.
+
+KiduCode is an independent fork of OpenCode. Internal paths may still use OpenCode naming while the fork remains upstream-mergeable.
+
+## Development
 
 ```bash
 bun install
+bun run --conditions=browser ./src/index.ts --help
 ```
 
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.2.12. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+Use `kiducode` for the installed CLI command.

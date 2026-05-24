@@ -353,19 +353,19 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     if (!terminalTitleEnabled() || Flag.OPENCODE_DISABLE_TERMINAL_TITLE) return
 
     if (route.data.type === "home") {
-      renderer.setTerminalTitle("OpenCode")
+      renderer.setTerminalTitle("KiduCode")
       return
     }
 
     if (route.data.type === "session") {
       const session = sync.session.get(route.data.sessionID)
       if (!session || SessionApi.isDefaultTitle(session.title)) {
-        renderer.setTerminalTitle("OpenCode")
+        renderer.setTerminalTitle("KiduCode")
         return
       }
 
       const title = session.title.length > 40 ? session.title.slice(0, 37) + "..." : session.title
-      renderer.setTerminalTitle(`OC | ${title}`)
+      renderer.setTerminalTitle(`KC | ${title}`)
       return
     }
 
@@ -689,7 +689,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         name: "docs.open",
         title: "Open docs",
         run: () => {
-          open("https://opencode.ai/docs").catch(() => {})
+          open("https://kiducode.com/docs").catch(() => {})
           dialog.clear()
         },
         category: "System",
@@ -925,7 +925,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     await DialogAlert.show(
       dialog,
       "Update Complete",
-      `Successfully updated to OpenCode v${result.data.version}. Please restart the application.`,
+      `Successfully updated to KiduCode v${result.data.version}. Please restart the application.`,
     )
 
     void exit()

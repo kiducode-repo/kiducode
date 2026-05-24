@@ -17,7 +17,9 @@ import * as Log from "@opencode-ai/core/util/log"
 import { SessionShareTable } from "./share.sql"
 
 const log = Log.create({ service: "share-next" })
-const disabled = process.env["OPENCODE_DISABLE_SHARE"] === "true" || process.env["OPENCODE_DISABLE_SHARE"] === "1"
+const disabled = [process.env["KIDUCODE_DISABLE_SHARE"], process.env["OPENCODE_DISABLE_SHARE"]].some(
+  (value) => value === "true" || value === "1",
+)
 
 export type Api = {
   create: string

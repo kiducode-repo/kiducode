@@ -40,16 +40,16 @@ import { checkUpdate, checkForUpdates, installUpdate, setupAutoUpdater } from ".
 import { Deferred, Effect, Fiber } from "effect"
 
 const APP_NAMES: Record<string, string> = {
-  dev: "OpenCode Dev",
-  beta: "OpenCode Beta",
-  prod: "OpenCode",
+  dev: "KiduCode Dev",
+  beta: "KiduCode Beta",
+  prod: "KiduCode",
 }
 const APP_IDS: Record<string, string> = {
-  dev: "ai.opencode.desktop.dev",
-  beta: "ai.opencode.desktop.beta",
-  prod: "ai.opencode.desktop",
+  dev: "com.kiducode.desktop.dev",
+  beta: "com.kiducode.desktop.beta",
+  prod: "com.kiducode.desktop",
 }
-const TEST_ONBOARDING = process.env.OPENCODE_TEST_ONBOARDING === "1"
+const TEST_ONBOARDING = (process.env.KIDUCODE_TEST_ONBOARDING ?? process.env.OPENCODE_TEST_ONBOARDING) === "1"
 const jsCallStackFeature = "DocumentPolicyIncludeJSCallStacksInCrashReports"
 
 let logger: ReturnType<typeof initLogging>
@@ -117,17 +117,19 @@ const main = Effect.gen(function* () {
     process.chdir(homedir())
   } catch {}
 
+  process.env.KIDUCODE_DISABLE_EMBEDDED_WEB_UI = "true"
   process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI = "true"
 
-  const appId = app.isPackaged ? APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
+  const appId = app.isPackaged ? APP_IDS[CHANNEL] : "com.kiducode.desktop.dev"
   const onboardingTestRoot = ((): string | undefined => {
     if (!TEST_ONBOARDING) return
 
-    const root = join(tmpdir(), `opencode-onboarding-${randomUUID()}`)
+    const root = join(tmpdir(), `kiducode-onboarding-${randomUUID()}`)
     rmSync(root, { recursive: true, force: true })
     ;["data", "config", "cache", "state", "desktop", "session"].forEach((dir) =>
       mkdirSync(join(root, dir), { recursive: true }),
     )
+    process.env.KIDUCODE_DB = ":memory:"
     process.env.OPENCODE_DB = ":memory:"
     process.env.XDG_DATA_HOME = join(root, "data")
     process.env.XDG_CONFIG_HOME = join(root, "config")
@@ -135,7 +137,7 @@ const main = Effect.gen(function* () {
     process.env.XDG_STATE_HOME = join(root, "state")
     return root
   })()
-  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "OpenCode Dev")
+  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "KiduCode Dev")
   app.setAppUserModelId(appId)
   app.setPath(
     "userData",
@@ -172,7 +174,7 @@ const main = Effect.gen(function* () {
   preferAppEnv(app.getPath("userData"))
 
   app.on("second-instance", (_event: Event, argv: string[]) => {
-    const urls = argv.filter((arg: string) => arg.startsWith("opencode://"))
+    const urls = argv.filter((arg: string) => arg.startsWith("kiducode://") || arg.startsWith("opencode://"))
     if (urls.length) {
       logger.log("deep link received via second-instance", { urls })
       emitDeepLinks(urls)
@@ -276,16 +278,16 @@ const main = Effect.gen(function* () {
   )
 
   const needsMigration = ((): boolean => {
-    if (process.env.OPENCODE_DB === ":memory:") return false
+    if ((process.env.KIDUCODE_DB ?? process.env.OPENCODE_DB) === ":memory:") return false
 
     const xdg = process.env.XDG_DATA_HOME
     const base = xdg && xdg.length > 0 ? xdg : join(homedir(), ".local", "share")
-    return !existsSync(join(base, "opencode", "opencode.db"))
+    return !existsSync(join(base, "kiducode", "kiducode.db")) && !existsSync(join(base, "opencode", "opencode.db"))
   })()
   let overlay: BrowserWindow | null = null
 
   const port = yield* Effect.gen(function* () {
-    const fromEnv = process.env.OPENCODE_PORT
+    const fromEnv = process.env.KIDUCODE_PORT ?? process.env.OPENCODE_PORT
     if (fromEnv) {
       const parsed = Number.parseInt(fromEnv, 10)
       if (!Number.isNaN(parsed)) return parsed

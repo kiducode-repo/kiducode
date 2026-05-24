@@ -506,8 +506,8 @@ export class Agent implements ACPAgent {
     log.info("initialize", { protocolVersion: params.protocolVersion })
 
     const authMethod: AuthMethod = {
-      description: "Run `opencode auth login` in the terminal",
-      name: "Login with opencode",
+      description: "Run `kiducode console login` in the terminal",
+      name: "Login with KiduCode",
       id: "opencode-login",
     }
 
@@ -515,9 +515,9 @@ export class Agent implements ACPAgent {
     if (params.clientCapabilities?._meta?.["terminal-auth"] === true) {
       authMethod._meta = {
         "terminal-auth": {
-          command: "opencode",
-          args: ["auth", "login"],
-          label: "OpenCode Login",
+          command: "kiducode",
+          args: ["console", "login"],
+          label: "KiduCode Login",
         },
       }
     }
@@ -543,7 +543,7 @@ export class Agent implements ACPAgent {
       },
       authMethods: [authMethod],
       agentInfo: {
-        name: "OpenCode",
+        name: "KiduCode",
         version: InstallationVersion,
       },
     }

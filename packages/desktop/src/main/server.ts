@@ -19,7 +19,7 @@ type SidecarMessage =
 
 export type SidecarListener = { stop: () => Promise<void> }
 
-const SIDECAR_SERVICE_NAME = "opencode server"
+const SIDECAR_SERVICE_NAME = "kiducode server"
 const SIDECAR_START_STALL_TIMEOUT = 60_000
 const SIDECAR_STOP_TIMEOUT = 6_000
 
@@ -59,6 +59,9 @@ export function preferAppEnv(userDataPath: string) {
   const shell = process.platform === "win32" ? null : getUserShell()
   Object.assign(process.env, {
     ...(shell ? loadShellEnv(shell) : null),
+    KIDUCODE_EXPERIMENTAL_ICON_DISCOVERY: "true",
+    KIDUCODE_EXPERIMENTAL_FILEWATCHER: "true",
+    KIDUCODE_CLIENT: "desktop",
     OPENCODE_EXPERIMENTAL_ICON_DISCOVERY: "true",
     OPENCODE_EXPERIMENTAL_FILEWATCHER: "true",
     OPENCODE_CLIENT: "desktop",
@@ -211,7 +214,7 @@ export async function checkHealth(url: string, password?: string | null): Promis
 
   const headers = new Headers()
   if (password) {
-    const auth = Buffer.from(`opencode:${password}`).toString("base64")
+    const auth = Buffer.from(`kiducode:${password}`).toString("base64")
     headers.set("authorization", `Basic ${auth}`)
   }
 

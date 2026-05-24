@@ -29,10 +29,17 @@ const readRuntimeFlags = () =>
   Effect.runSync(RuntimeFlags.Service.useSync((flags) => flags).pipe(Effect.provide(RuntimeFlags.defaultLayer)))
 
 export function getChannelPath(flags: Pick<DatabaseFlags, "disableChannelDb"> = readRuntimeFlags()) {
-  if (["latest", "beta", "prod"].includes(InstallationChannel) || flags.disableChannelDb)
-    return path.join(Global.Path.data, "opencode.db")
+  if (["latest", "beta", "prod"].includes(InstallationChannel) || flags.disableChannelDb) {
+    const current = path.join(Global.Path.data, "kiducode.db")
+    const legacy = path.join(Global.Path.data, "opencode.db")
+    if (!existsSync(current) && existsSync(legacy)) return legacy
+    return current
+  }
   const safe = InstallationChannel.replace(/[^a-zA-Z0-9._-]/g, "-")
-  return path.join(Global.Path.data, `opencode-${safe}.db`)
+  const current = path.join(Global.Path.data, `kiducode-${safe}.db`)
+  const legacy = path.join(Global.Path.data, `opencode-${safe}.db`)
+  if (!existsSync(current) && existsSync(legacy)) return legacy
+  return current
 }
 
 export const getPath = (flags?: Pick<DatabaseFlags, "disableChannelDb">) => {

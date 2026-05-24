@@ -69,8 +69,8 @@ Add to your Zed configuration (`~/.config/zed/settings.json`):
 ```json
 {
   "agent_servers": {
-    "OpenCode": {
-      "command": "opencode",
+    "KiduCode": {
+      "command": "kiducode",
       "args": ["acp"]
     }
   }
@@ -124,7 +124,7 @@ This implementation follows the ACP specification v1:
 - **Session Persistence**: Save and restore full conversation history
 - **Mode Support**: Implement different operational modes (ask, code, etc.)
 - **Enhanced Permissions**: More sophisticated permission handling
-- **Terminal Integration**: Full terminal support via opencode's bash tool
+- **Terminal Integration**: Full terminal support via KiduCode's bash tool
 
 ## Testing
 
@@ -158,9 +158,9 @@ Each component has a single responsibility:
 
 This makes the codebase maintainable and testable.
 
-### Mapping to OpenCode
+### Mapping to KiduCode
 
-ACP sessions map cleanly to opencode's internal session model:
+ACP sessions map cleanly to KiduCode's internal session model:
 
 - ACP `session/new` → creates internal Session
 - ACP `session/prompt` → uses SessionPrompt.prompt()

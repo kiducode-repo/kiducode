@@ -8,9 +8,9 @@ import { Process } from "@/util/process"
 
 const log = Log.create({ service: "config" })
 
-const MANAGED_PLIST_DOMAIN = "ai.opencode.managed"
+const MANAGED_PLIST_DOMAIN = "com.kiducode.managed"
 
-// Keys injected by macOS/MDM into the managed plist that are not OpenCode config
+// Keys injected by macOS/MDM into the managed plist that are not KiduCode config
 const PLIST_META = new Set([
   "PayloadDisplayName",
   "PayloadIdentifier",
@@ -23,6 +23,17 @@ const PLIST_META = new Set([
 function systemManagedConfigDir(): string {
   switch (process.platform) {
     case "darwin":
+      return "/Library/Application Support/kiducode"
+    case "win32":
+      return path.join(process.env.ProgramData || "C:\\ProgramData", "kiducode")
+    default:
+      return "/etc/kiducode"
+  }
+}
+
+function legacySystemManagedConfigDir(): string {
+  switch (process.platform) {
+    case "darwin":
       return "/Library/Application Support/opencode"
     case "win32":
       return path.join(process.env.ProgramData || "C:\\ProgramData", "opencode")
@@ -32,7 +43,14 @@ function systemManagedConfigDir(): string {
 }
 
 export function managedConfigDir() {
-  return process.env.OPENCODE_TEST_MANAGED_CONFIG_DIR || systemManagedConfigDir()
+  if (process.env.KIDUCODE_TEST_MANAGED_CONFIG_DIR || process.env.OPENCODE_TEST_MANAGED_CONFIG_DIR) {
+    return process.env.KIDUCODE_TEST_MANAGED_CONFIG_DIR || process.env.OPENCODE_TEST_MANAGED_CONFIG_DIR!
+  }
+  const current = systemManagedConfigDir()
+  if (existsSync(current)) return current
+  const legacy = legacySystemManagedConfigDir()
+  if (existsSync(legacy)) return legacy
+  return current
 }
 
 export function parseManagedPlist(json: string): string {

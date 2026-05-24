@@ -1,7 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "version": "1.15.10",
-  "name": "opencode",
+  "name": "kiducode",
+  "description": "KiduCode CLI: a Kerala-built open-source AI coding agent forked from OpenCode",
   "type": "module",
   "license": "MIT",
   "private": true,
@@ -19,7 +20,7 @@
     "db": "bun drizzle-kit"
   },
   "bin": {
-    "opencode": "./bin/opencode"
+    "kiducode": "./bin/kiducode"
   },
   "exports": {
     "./*": "./src/*.ts"

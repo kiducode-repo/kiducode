@@ -138,9 +138,9 @@ type IssueQueryResponse = {
   }
 }
 
-const AGENT_USERNAME = "opencode-agent[bot]"
+const AGENT_USERNAME = "kiducode-agent[bot]"
 const AGENT_REACTION = "eyes"
-const WORKFLOW_FILE = ".github/workflows/opencode.yml"
+const WORKFLOW_FILE = ".github/workflows/kiducode.yml"
 
 // Event categories for routing
 // USER_EVENTS: triggered by user actions, have actor/issueId, support reactions/comments
@@ -239,7 +239,7 @@ export const GithubInstallCommand = effectCmd({
               "",
               "    3. Go to a GitHub issue and comment `/oc summarize` to see the agent in action",
               "",
-              "   Learn more about the GitHub agent - https://opencode.ai/docs/github/#usage-examples",
+              "   Learn more about the GitHub agent - https://kiducode.com/docs/github/#usage-examples",
             ].join("\n"),
           )
         }
@@ -323,7 +323,7 @@ export const GithubInstallCommand = effectCmd({
           if (installation) return s.stop("GitHub app already installed")
 
           // Open browser
-          const url = "https://github.com/apps/opencode-agent"
+          const url = "https://github.com/apps/kiducode-agent"
           const command =
             process.platform === "darwin"
               ? `open "${url}"`
@@ -360,7 +360,7 @@ export const GithubInstallCommand = effectCmd({
 
           async function getInstallation() {
             return await fetch(
-              `https://api.opencode.ai/get_github_app_installation?owner=${app.owner}&repo=${app.repo}`,
+              `https://api.kiducode.com/get_github_app_installation?owner=${app.owner}&repo=${app.repo}`,
             )
               .then((res) => res.json())
               .then((data) => data.installation)
@@ -375,7 +375,7 @@ export const GithubInstallCommand = effectCmd({
 
           await Filesystem.write(
             path.join(app.root, WORKFLOW_FILE),
-            `name: opencode
+            `name: kiducode
 
 on:
   issue_comment:
@@ -384,12 +384,12 @@ on:
     types: [created]
 
 jobs:
-  opencode:
+  kiducode:
     if: |
       contains(github.event.comment.body, ' /oc') ||
       startsWith(github.event.comment.body, '/oc') ||
-      contains(github.event.comment.body, ' /opencode') ||
-      startsWith(github.event.comment.body, '/opencode')
+      contains(github.event.comment.body, ' /kiducode') ||
+      startsWith(github.event.comment.body, '/kiducode')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -402,7 +402,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run opencode
+      - name: Run KiduCode
+        # TODO: replace with kiducode/kiducode/github@latest after KiduCode releases are published.
         uses: anomalyco/opencode/github@latest${envStr}
         with:
           model: ${provider}/${model}`,
@@ -481,7 +482,7 @@ export const GithubRunCommand = effectCmd({
           ? (payload as IssueCommentEvent | IssuesEvent).issue.number
           : (payload as PullRequestEvent | PullRequestReviewCommentEvent).pull_request.number
       const runUrl = `/${owner}/${repo}/actions/runs/${runId}`
-      const shareBaseUrl = isMock ? "https://dev.opencode.ai" : "https://opencode.ai"
+      const shareBaseUrl = isMock ? "https://dev.kiducode.com" : "https://kiducode.com"
 
       let appToken: string
       let octoRest: Octokit
@@ -742,7 +743,7 @@ export const GithubRunCommand = effectCmd({
 
       function normalizeOidcBaseUrl(): string {
         const value = process.env["OIDC_BASE_URL"]
-        if (!value) return "https://api.opencode.ai"
+        if (!value) return "https://api.kiducode.com"
         return value.replace(/\/+$/, "")
       }
 
@@ -791,7 +792,7 @@ export const GithubRunCommand = effectCmd({
         }
 
         const reviewContext = getReviewCommentContext()
-        const mentions = (process.env["MENTIONS"] || "/opencode,/oc")
+        const mentions = (process.env["MENTIONS"] || "/kiducode,/oc")
           .split(",")
           .map((m) => m.trim().toLowerCase())
           .filter(Boolean)
@@ -1404,9 +1405,9 @@ export const GithubRunCommand = effectCmd({
           const titleAlt = encodeURIComponent(session.title.substring(0, 50))
           const title64 = Buffer.from(session.title.substring(0, 700), "utf8").toString("base64")
 
-          return `<a href="${shareBaseUrl}/s/${shareId}"><img width="200" alt="${titleAlt}" src="https://social-cards.sst.dev/opencode-share/${title64}.png?model=${providerID}/${modelID}&version=${session.version}&id=${shareId}" /></a>\n`
+          return `<a href="${shareBaseUrl}/s/${shareId}"><img width="200" alt="${titleAlt}" src="https://social-cards.sst.dev/kiducode-share/${title64}.png?model=${providerID}/${modelID}&version=${session.version}&id=${shareId}" /></a>\n`
         })()
-        const shareUrl = shareId ? `[opencode session](${shareBaseUrl}/s/${shareId})&nbsp;&nbsp;|&nbsp;&nbsp;` : ""
+        const shareUrl = shareId ? `[kiducode session](${shareBaseUrl}/s/${shareId})&nbsp;&nbsp;|&nbsp;&nbsp;` : ""
         return `\n\n${image}${shareUrl}[github run](${runUrl})`
       }
 

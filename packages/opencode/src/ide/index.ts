@@ -40,14 +40,19 @@ export function ide() {
 }
 
 export function alreadyInstalled() {
-  return process.env["OPENCODE_CALLER"] === "vscode" || process.env["OPENCODE_CALLER"] === "vscode-insiders"
+  return (
+    process.env["KIDUCODE_CALLER"] === "vscode" ||
+    process.env["KIDUCODE_CALLER"] === "vscode-insiders" ||
+    process.env["OPENCODE_CALLER"] === "vscode" ||
+    process.env["OPENCODE_CALLER"] === "vscode-insiders"
+  )
 }
 
 export async function install(ide: (typeof SUPPORTED_IDES)[number]["name"]) {
   const cmd = SUPPORTED_IDES.find((i) => i.name === ide)?.cmd
   if (!cmd) throw new Error(`Unknown IDE: ${ide}`)
 
-  const p = await Process.run([cmd, "--install-extension", "sst-dev.opencode"], {
+  const p = await Process.run([cmd, "--install-extension", "sst-dev.kiducode"], {
     nothrow: true,
   })
   const stdout = p.stdout.toString()

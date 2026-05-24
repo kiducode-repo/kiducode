@@ -1,13 +1,13 @@
 {
-  "name": "@opencode-ai/desktop",
+  "name": "@kiducode/desktop",
   "private": true,
   "version": "1.15.10",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://opencode.ai",
+  "homepage": "https://kiducode.com",
   "author": {
-    "name": "OpenCode",
-    "email": "hello@opencode.ai"
+    "name": "KiduCode",
+    "email": "hello@kiducode.com"
   },
   "scripts": {
     "typecheck": "tsgo -b",
