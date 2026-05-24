@@ -1,5 +1,34 @@
 import { type ComponentProps } from "solid-js"
 
+const WORDMARK = [
+  "██╗  ██╗██╗██████╗ ██╗   ██╗     ██████╗ ██████╗ ██████╗ ███████╗",
+  "██║ ██╔╝██║██╔══██╗██║   ██║    ██╔════╝██╔═══██╗██╔══██╗██╔════╝",
+  "█████╔╝ ██║██║  ██║██║   ██║    ██║     ██║   ██║██║  ██║█████╗  ",
+  "██╔═██╗ ██║██║  ██║██║   ██║    ██║     ██║   ██║██║  ██║██╔══╝  ",
+  "██║  ██╗██║██████╔╝╚██████╔╝    ╚██████╗╚██████╔╝██████╔╝███████╗",
+  "╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝      ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝",
+]
+const BORDER_CHARS = new Set(["╗", "║", "╝", "═", "╔", "╚"])
+
+function segments(line: string) {
+  const result: Array<{ text: string; fill?: string }> = []
+  let text = ""
+  let fill: string | undefined
+
+  for (const char of line) {
+    const next = char === "█" ? "var(--icon-strong-base)" : BORDER_CHARS.has(char) ? "var(--icon-base)" : undefined
+    if (text && next !== fill) {
+      result.push({ text, fill })
+      text = ""
+    }
+    text += char
+    fill = next
+  }
+
+  if (text) result.push({ text, fill })
+  return result
+}
+
 export const Mark = (props: { class?: string }) => {
   return (
     <svg
@@ -33,29 +62,19 @@ export const Splash = (props: Pick<ComponentProps<"svg">, "ref" | "class">) => {
 
 export const Logo = (props: { class?: string }) => {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 234 42"
-      fill="none"
-      classList={{ [props.class ?? ""]: !!props.class }}
-    >
-      <g>
-        <path d="M18 30H6V18H18V30Z" fill="var(--icon-weak-base)" />
-        <path d="M18 12H6V30H18V12ZM24 36H0V6H24V36Z" fill="var(--icon-base)" />
-        <path d="M48 30H36V18H48V30Z" fill="var(--icon-weak-base)" />
-        <path d="M36 30H48V12H36V30ZM54 36H36V42H30V6H54V36Z" fill="var(--icon-base)" />
-        <path d="M84 24V30H66V24H84Z" fill="var(--icon-weak-base)" />
-        <path d="M84 24H66V30H84V36H60V6H84V24ZM66 18H78V12H66V18Z" fill="var(--icon-base)" />
-        <path d="M108 36H96V18H108V36Z" fill="var(--icon-weak-base)" />
-        <path d="M108 12H96V36H90V6H108V12ZM114 36H108V12H114V36Z" fill="var(--icon-base)" />
-        <path d="M144 30H126V18H144V30Z" fill="var(--icon-weak-base)" />
-        <path d="M144 12H126V30H144V36H120V6H144V12Z" fill="var(--icon-strong-base)" />
-        <path d="M168 30H156V18H168V30Z" fill="var(--icon-weak-base)" />
-        <path d="M168 12H156V30H168V12ZM174 36H150V6H174V36Z" fill="var(--icon-strong-base)" />
-        <path d="M198 30H186V18H198V30Z" fill="var(--icon-weak-base)" />
-        <path d="M198 12H186V30H198V12ZM204 36H180V6H198V0H204V36Z" fill="var(--icon-strong-base)" />
-        <path d="M234 24V30H216V24H234Z" fill="var(--icon-weak-base)" />
-        <path d="M216 12V18H228V12H216ZM234 24H216V30H234V36H210V6H234V24Z" fill="var(--icon-strong-base)" />
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 88" fill="none" classList={{ [props.class ?? ""]: !!props.class }}>
+      <g
+        font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"
+        font-size="11"
+        style={{ "white-space": "pre" }}
+      >
+        {WORDMARK.map((line, index) => (
+          <text x="0" y={11 + index * 13}>
+            {segments(line).map((segment) => (
+              <tspan fill={segment.fill}>{segment.text}</tspan>
+            ))}
+          </text>
+        ))}
       </g>
     </svg>
   )

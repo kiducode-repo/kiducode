@@ -370,7 +370,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     }
 
     if (route.data.type === "plugin") {
-      renderer.setTerminalTitle(`OC | ${route.data.id}`)
+        renderer.setTerminalTitle(`KC | ${route.data.id}`)
     }
   })
 
