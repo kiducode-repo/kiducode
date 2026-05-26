@@ -687,13 +687,18 @@ export function Logo(props: { shape?: LogoShape; ink?: RGBA; idle?: boolean } = 
     dusk: Frame,
     state: IdleState | undefined,
   ): JSX.Element[] => {
-    const shadow = tint(theme.background, ink, 0.25)
     const attrs = bold ? TextAttributes.BOLD : undefined
 
     return Array.from(line).map((char, i) => {
+      let cellInk = ink
+      if (char === "█") cellInk = PEAK
+      else if (char === "╗" || char === "║" || char === "╝" || char === "═" || char === "╔" || char === "╚") cellInk = theme.primary
+
+      const shadow = tint(theme.background, cellInk, 0.25)
+
       if (char === " ") {
         return (
-          <text fg={ink} attributes={attrs} selectable={false}>
+          <text fg={cellInk} attributes={attrs} selectable={false}>
             {char}
           </text>
         )
@@ -710,8 +715,8 @@ export function Logo(props: { shape?: LogoShape; ink?: RGBA; idle?: boolean } = 
       const primaryMixBot = charLit ? Math.min(1, pulseBot.primary) : 0
       // Layer primary tint first, then white peak on top — so the halo/tail pulls toward primary,
       // while the bright core stays pure white
-      const inkTopTint = primaryMixTop > 0 ? tint(ink, theme.primary, primaryMixTop) : ink
-      const inkBotTint = primaryMixBot > 0 ? tint(ink, theme.primary, primaryMixBot) : ink
+      const inkTopTint = primaryMixTop > 0 ? tint(cellInk, theme.primary, primaryMixTop) : cellInk
+      const inkBotTint = primaryMixBot > 0 ? tint(cellInk, theme.primary, primaryMixBot) : cellInk
       const inkTop = peakMixTop > 0 ? tint(inkTopTint, PEAK, peakMixTop) : inkTopTint
       const inkBot = peakMixBot > 0 ? tint(inkBotTint, PEAK, peakMixBot) : inkBotTint
       // For the non-peak-aware brightness channels, use the average of top/bot
@@ -722,7 +727,7 @@ export function Logo(props: { shape?: LogoShape; ink?: RGBA; idle?: boolean } = 
       }
       const peakMix = charLit ? Math.min(1, pulse.peak) : 0
       const primaryMix = charLit ? Math.min(1, pulse.primary) : 0
-      const inkPrimary = primaryMix > 0 ? tint(ink, theme.primary, primaryMix) : ink
+      const inkPrimary = primaryMix > 0 ? tint(cellInk, theme.primary, primaryMix) : cellInk
       const inkTinted = peakMix > 0 ? tint(inkPrimary, PEAK, peakMix) : inkPrimary
       const shadowMixCfg = state?.cfg.shadowMix ?? shimmerConfig.shadowMix
       const shadowMixTop = Math.min(1, pulseTop.peak * shadowMixCfg)

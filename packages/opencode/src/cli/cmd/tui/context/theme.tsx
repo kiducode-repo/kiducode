@@ -36,6 +36,8 @@ import vercel from "./theme/vercel.json" with { type: "json" }
 import vesper from "./theme/vesper.json" with { type: "json" }
 import zenburn from "./theme/zenburn.json" with { type: "json" }
 import carbonfox from "./theme/carbonfox.json" with { type: "json" }
+import mintKiducode from "./theme/mint-kiducode.json" with { type: "json" }
+import orangeKiducode from "./theme/orange-kiducode.json" with { type: "json" }
 import { useKV } from "./kv"
 import { useRenderer } from "@opentui/solid"
 import { createStore, produce } from "solid-js/store"
@@ -87,39 +89,8 @@ export type ThemeJson = {
 }
 
 export const DEFAULT_THEMES: Record<string, ThemeJson> = {
-  aura,
-  ayu,
-  catppuccin,
-  ["catppuccin-frappe"]: catppuccinFrappe,
-  ["catppuccin-macchiato"]: catppuccinMacchiato,
-  cobalt2,
-  cursor,
-  dracula,
-  everforest,
-  flexoki,
-  github,
-  gruvbox,
-  kanagawa,
-  material,
-  matrix,
-  mercury,
-  monokai,
-  nightowl,
-  nord,
-  ["one-dark"]: onedark,
-  ["osaka-jade"]: osakaJade,
-  opencode,
-  orng,
-  ["lucent-orng"]: lucentOrng,
-  palenight,
-  rosepine,
-  solarized,
-  synthwave84,
-  tokyonight,
-  vesper,
-  vercel,
-  zenburn,
-  carbonfox,
+  "mint-kiducode": mintKiducode as any,
+  "orange-kiducode": orangeKiducode as any,
 }
 
 type State = {
@@ -156,7 +127,7 @@ const [store, setStore] = createStore<State>({
   themes: listThemes(),
   mode: "dark",
   lock: undefined,
-  active: "opencode",
+  active: "mint-kiducode",
   ready: false,
 })
 
@@ -321,8 +292,8 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
         }
         draft.mode = mode
         draft.lock = lock
-        const active = config.theme ?? kv.get("theme", "opencode")
-        draft.active = typeof active === "string" ? active : "opencode"
+        const active = config.theme ?? kv.get("theme", "mint-kiducode")
+        draft.active = typeof active === "string" ? active : "mint-kiducode"
         draft.ready = false
       }),
     )
@@ -341,7 +312,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
             syncThemes()
           })
           .catch(() => {
-            setStore("active", "opencode")
+            setStore("active", "mint-kiducode")
           }),
       ]).finally(() => {
         setStore("ready", true)
@@ -360,7 +331,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
             systemTheme = undefined
             syncThemes()
             if (store.active === "system") {
-              setStore("active", "opencode")
+              setStore("active", "mint-kiducode")
             }
             return
           }
@@ -371,7 +342,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
           systemTheme = undefined
           syncThemes()
           if (store.active === "system") {
-            setStore("active", "opencode")
+            setStore("active", "mint-kiducode")
           }
         })
     }
@@ -429,7 +400,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
         }
       }
 
-      return resolveTheme(store.themes.opencode, store.mode)
+      return resolveTheme(store.themes["mint-kiducode"], store.mode)
     })
 
     createEffect(() => {

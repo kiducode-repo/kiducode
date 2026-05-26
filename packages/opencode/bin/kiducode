@@ -8,8 +8,8 @@ import { fileURLToPath } from "url"
 
 const forwardedSignals = ["SIGINT", "SIGTERM", "SIGHUP"]
 
-function run(target) {
-  const child = childProcess.spawn(target, process.argv.slice(2), {
+function run(target, args = process.argv.slice(2)) {
+  const child = childProcess.spawn(target, args, {
     stdio: "inherit",
   })
 
@@ -189,14 +189,31 @@ function findBinary(startDir) {
   }
 }
 
-const resolved = envPath || (fs.existsSync(cached) ? cached : findBinary(scriptDir))
-if (!resolved) {
-  console.error(
-    "It seems that your package manager failed to install the right version of the KiduCode CLI for your platform. You can try manually installing " +
-      names.map((n) => `\"${n}\"`).join(" or ") +
-      " package",
-  )
-  process.exit(1)
+function findSourceEntry(startDir) {
+  let current = startDir
+  for (;;) {
+    const entry = path.join(current, "src", "index.ts")
+    const packageJson = path.join(current, "package.json")
+    if (fs.existsSync(entry) && fs.existsSync(packageJson)) return { current, entry }
+    const parent = path.dirname(current)
+    if (parent === current) return
+    current = parent
+  }
 }
 
-run(resolved)
+const resolved = envPath || (fs.existsSync(cached) ? cached : findBinary(scriptDir))
+if (resolved) {
+  run(resolved)
+} else {
+  const source = findSourceEntry(scriptDir)
+  if (source) {
+    run("bun", ["run", "--cwd", source.current, "--conditions=browser", source.entry, ...process.argv.slice(2)])
+  } else {
+    console.error(
+      "It seems that your package manager failed to install the right version of the KiduCode CLI for your platform. You can try manually installing " +
+        names.map((n) => `\"${n}\"`).join(" or ") +
+        " package",
+    )
+    process.exit(1)
+  }
+}

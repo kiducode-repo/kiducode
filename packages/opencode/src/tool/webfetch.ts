@@ -75,6 +75,10 @@ export const WebFetchTool = Tool.define(
 
           const request = HttpClientRequest.get(params.url).pipe(HttpClientRequest.setHeaders(headers))
 
+          // Allow self-signed certs for local development/staging
+          const originalReject = process.env.NODE_TLS_REJECT_UNAUTHORIZED
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+
           // Retry with honest UA if blocked by Cloudflare bot detection (TLS fingerprint mismatch)
           const response = yield* httpOk.execute(request).pipe(
             Effect.catchIf(
@@ -90,6 +94,10 @@ export const WebFetchTool = Tool.define(
                 ),
             ),
             Effect.timeoutOrElse({ duration: timeout, orElse: () => Effect.die(new Error("Request timed out")) }),
+            Effect.tapBoth({
+              onFailure: () => Effect.sync(() => { process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalReject }),
+              onSuccess: () => Effect.sync(() => { process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalReject })
+            })
           )
 
           // Check content length

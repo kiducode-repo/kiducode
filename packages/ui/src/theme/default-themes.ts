@@ -36,6 +36,8 @@ import tokyonightThemeJson from "./themes/tokyonight.json"
 import vercelThemeJson from "./themes/vercel.json"
 import vesperThemeJson from "./themes/vesper.json"
 import zenburnThemeJson from "./themes/zenburn.json"
+import mintKiducodeThemeJson from "./themes/mint-kiducode.json"
+import orangeKiducodeThemeJson from "./themes/orange-kiducode.json"
 
 export const oc2Theme = oc2ThemeJson as DesktopTheme
 export const amoledTheme = amoledThemeJson as DesktopTheme
@@ -74,43 +76,10 @@ export const tokyonightTheme = tokyonightThemeJson as DesktopTheme
 export const vercelTheme = vercelThemeJson as DesktopTheme
 export const vesperTheme = vesperThemeJson as DesktopTheme
 export const zenburnTheme = zenburnThemeJson as DesktopTheme
+export const mintKiducodeTheme = mintKiducodeThemeJson as DesktopTheme
+export const orangeKiducodeTheme = orangeKiducodeThemeJson as DesktopTheme
 
 export const DEFAULT_THEMES: Record<string, DesktopTheme> = {
-  "oc-2": oc2Theme,
-  amoled: amoledTheme,
-  aura: auraTheme,
-  ayu: ayuTheme,
-  carbonfox: carbonfoxTheme,
-  catppuccin: catppuccinTheme,
-  "catppuccin-frappe": catppuccinFrappeTheme,
-  "catppuccin-macchiato": catppuccinMacchiatoTheme,
-  cobalt2: cobalt2Theme,
-  cursor: cursorTheme,
-  dracula: draculaTheme,
-  everforest: everforestTheme,
-  flexoki: flexokiTheme,
-  github: githubTheme,
-  gruvbox: gruvboxTheme,
-  kanagawa: kanagawaTheme,
-  "lucent-orng": lucentOrngTheme,
-  material: materialTheme,
-  matrix: matrixTheme,
-  mercury: mercuryTheme,
-  monokai: monokaiTheme,
-  nightowl: nightowlTheme,
-  nord: nordTheme,
-  "one-dark": oneDarkTheme,
-  onedarkpro: oneDarkProTheme,
-  opencode: opencodeTheme,
-  orng: orngTheme,
-  "osaka-jade": osakaJadeTheme,
-  palenight: palenightTheme,
-  rosepine: rosepineTheme,
-  shadesofpurple: shadesOfPurpleTheme,
-  solarized: solarizedTheme,
-  synthwave84: synthwave84Theme,
-  tokyonight: tokyonightTheme,
-  vercel: vercelTheme,
-  vesper: vesperTheme,
-  zenburn: zenburnTheme,
+  "mint-kiducode": mintKiducodeTheme,
+  "orange-kiducode": orangeKiducodeTheme,
 }
