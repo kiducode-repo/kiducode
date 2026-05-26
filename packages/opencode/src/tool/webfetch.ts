@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect"
-import { HttpClient, HttpClientRequest } from "effect/unstable/http"
+import { HttpClient, HttpClientError, HttpClientRequest } from "effect/unstable/http"
 import { Parser } from "htmlparser2"
 import * as Tool from "./tool"
 import TurndownService from "turndown"
@@ -83,6 +83,7 @@ export const WebFetchTool = Tool.define(
           const response = yield* httpOk.execute(request).pipe(
             Effect.catchIf(
               (err) =>
+                HttpClientError.isHttpClientError(err) &&
                 err.reason._tag === "StatusCodeError" &&
                 err.reason.response.status === 403 &&
                 err.reason.response.headers["cf-mitigated"] === "challenge",
@@ -94,10 +95,11 @@ export const WebFetchTool = Tool.define(
                 ),
             ),
             Effect.timeoutOrElse({ duration: timeout, orElse: () => Effect.die(new Error("Request timed out")) }),
-            Effect.tapBoth({
-              onFailure: () => Effect.sync(() => { process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalReject }),
-              onSuccess: () => Effect.sync(() => { process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalReject })
-            })
+            Effect.ensuring(
+              Effect.sync(() => {
+                process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalReject
+              }),
+            ),
           )
 
           // Check content length
