@@ -1,0 +1,126 @@
+import { EOL } from "os"
+import { Schema } from "effect"
+
+const WORDMARK = [
+  "██╗  ██╗██╗██████╗ ██╗   ██╗     ██████╗ ██████╗ ██████╗ ███████╗    ",
+  "██║ ██╔╝██║██╔══██╗██║   ██║    ██╔════╝██╔═══██╗██╔══██╗██╔════╝    ",
+  "█████╔╝ ██║██║  ██║██║   ██║    ██║     ██║   ██║██║  ██║█████╗      ",
+  "██╔═██╗ ██║██║  ██║██║   ██║    ██║     ██║   ██║██║  ██║██╔══╝      ",
+  "██║  ██╗██║██████╔╝╚██████╔╝    ╚██████╗╚██████╔╝██████╔╝███████╗    ",
+  "╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝      ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝    ",
+]
+const TAGLINE = "Naadan prompts. Production code."
+const WORDMARK_WHITE = "\x1b[97m"
+const WORDMARK_ORANGE = "\x1b[38;2;255;117;0m"
+const WORDMARK_RESET = "\x1b[0m"
+const BORDER_CHARS = new Set(["╗", "║", "╝", "═", "╔", "╚"])
+
+export class CancelledError extends Schema.TaggedErrorClass<CancelledError>()("UICancelledError", {}) { }
+
+export const Style = {
+  TEXT_HIGHLIGHT: "\x1b[96m",
+  TEXT_HIGHLIGHT_BOLD: "\x1b[96m\x1b[1m",
+  TEXT_DIM: "\x1b[90m",
+  TEXT_DIM_BOLD: "\x1b[90m\x1b[1m",
+  TEXT_NORMAL: "\x1b[0m",
+  TEXT_NORMAL_BOLD: "\x1b[1m",
+  TEXT_WARNING: "\x1b[93m",
+  TEXT_WARNING_BOLD: "\x1b[93m\x1b[1m",
+  TEXT_DANGER: "\x1b[91m",
+  TEXT_DANGER_BOLD: "\x1b[91m\x1b[1m",
+  TEXT_SUCCESS: "\x1b[92m",
+  TEXT_SUCCESS_BOLD: "\x1b[92m\x1b[1m",
+  TEXT_INFO: "\x1b[94m",
+  TEXT_INFO_BOLD: "\x1b[94m\x1b[1m",
+}
+
+function wordmarkColor(char: string) {
+  if (char === "█") return WORDMARK_WHITE
+  if (BORDER_CHARS.has(char)) return WORDMARK_ORANGE
+  return ""
+}
+
+function colorizeWordmark(row: string) {
+  let result = ""
+  let current = ""
+  for (const char of row) {
+    const next = wordmarkColor(char)
+    if (next !== current) {
+      if (current) result += WORDMARK_RESET
+      if (next) result += next
+      current = next
+    }
+    result += char
+  }
+  if (current) result += WORDMARK_RESET
+  return result
+}
+
+export function println(...message: string[]) {
+  print(...message)
+  process.stderr.write(EOL)
+}
+
+export function print(...message: string[]) {
+  blank = false
+  process.stderr.write(message.join(" "))
+}
+
+let blank = false
+export function empty() {
+  if (blank) return
+  println("" + Style.TEXT_NORMAL)
+  blank = true
+}
+
+export function logo(pad?: string) {
+  if (!process.stdout.isTTY && !process.stderr.isTTY) {
+    const result = []
+    for (const row of WORDMARK) {
+      if (pad) result.push(pad)
+      result.push(row)
+      result.push(EOL)
+    }
+    if (pad) result.push(pad)
+    result.push(TAGLINE)
+    return result.join("").trimEnd()
+  }
+
+  const result: string[] = []
+  WORDMARK.forEach((row) => {
+    if (pad) result.push(pad)
+    result.push(colorizeWordmark(row))
+    result.push(EOL)
+  })
+  if (pad) result.push(pad)
+  result.push(Style.TEXT_DIM + TAGLINE + Style.TEXT_NORMAL)
+  return result.join("").trimEnd()
+}
+
+export async function input(prompt: string): Promise<string> {
+  const readline = require("readline")
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+
+  return new Promise((resolve) => {
+    rl.question(prompt, (answer: string) => {
+      rl.close()
+      resolve(answer.trim())
+    })
+  })
+}
+
+export function error(message: string) {
+  if (message.startsWith("Error: ")) {
+    message = message.slice("Error: ".length)
+  }
+  println(Style.TEXT_DANGER_BOLD + "Error: " + Style.TEXT_NORMAL + message)
+}
+
+export function markdown(text: string): string {
+  return text
+}
+
+export * as UI from "./ui"
