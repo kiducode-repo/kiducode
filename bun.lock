@@ -380,25 +380,7 @@
         "@typescript/native-preview": "catalog:",
       },
     },
-    "packages/llm": {
-      "name": "@opencode-ai/llm",
-      "version": "1.15.10",
-      "dependencies": {
-        "@smithy/eventstream-codec": "4.2.14",
-        "@smithy/util-utf8": "4.2.2",
-        "aws4fetch": "1.0.20",
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "@clack/prompts": "1.0.0-alpha.1",
-        "@effect/platform-node": "catalog:",
-        "@opencode-ai/http-recorder": "workspace:*",
-        "@tsconfig/bun": "catalog:",
-        "@types/bun": "catalog:",
-        "@typescript/native-preview": "catalog:",
-      },
-    },
-    "packages/opencode": {
+    "packages/kiducode": {
       "name": "kiducode",
       "version": "1.15.10",
       "bin": {
@@ -534,6 +516,24 @@
         "typescript": "catalog:",
         "vscode-languageserver-types": "3.17.5",
         "why-is-node-running": "3.2.2",
+      },
+    },
+    "packages/llm": {
+      "name": "@opencode-ai/llm",
+      "version": "1.15.10",
+      "dependencies": {
+        "@smithy/eventstream-codec": "4.2.14",
+        "@smithy/util-utf8": "4.2.2",
+        "aws4fetch": "1.0.20",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "@clack/prompts": "1.0.0-alpha.1",
+        "@effect/platform-node": "catalog:",
+        "@opencode-ai/http-recorder": "workspace:*",
+        "@tsconfig/bun": "catalog:",
+        "@types/bun": "catalog:",
+        "@typescript/native-preview": "catalog:",
       },
     },
     "packages/plugin": {
@@ -3656,7 +3656,7 @@
 
     "keyv": ["keyv@4.5.4", "", { "dependencies": { "json-buffer": "3.0.1" } }, "sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw=="],
 
-    "kiducode": ["kiducode@workspace:packages/opencode"],
+    "kiducode": ["kiducode@workspace:packages/kiducode"],
 
     "kind-of": ["kind-of@6.0.3", "", {}, "sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw=="],
 
