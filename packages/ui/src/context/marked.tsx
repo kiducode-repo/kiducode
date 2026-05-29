@@ -477,11 +477,11 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
           },
         },
       },
-      markedKatex({
+      (markedKatex({
         throwOnError: false,
         nonStandard: true,
-      }),
-      markedShiki({
+      }) as unknown as Parameters<typeof marked.use>[0]),
+      (markedShiki({
         async highlight(code, lang) {
           const highlighter = await getSharedHighlighter({
             themes: ["OpenCode"],
@@ -500,7 +500,7 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
             tabindex: false,
           })
         },
-      }),
+      }) as unknown as Parameters<typeof marked.use>[0]),
     )
 
     if (props.nativeParser) {
