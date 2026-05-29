@@ -6,9 +6,9 @@ import { fileURLToPath } from "url"
 const theme = fileURLToPath(new URL("./public/oc-theme-preload.js", import.meta.url))
 
 const channel = (() => {
-  const raw = process.env.OPENCODE_CHANNEL
+  const raw = process.env.KIDUCODE_CHANNEL ?? process.env.OPENCODE_CHANNEL
   if (raw === "dev" || raw === "beta" || raw === "prod") return raw
-  if (process.env.OPENCODE_CHANNEL === "latest") return "prod"
+  if (raw === "latest") return "prod"
   return "dev"
 })()
 
@@ -26,6 +26,7 @@ export default [
           },
         },
         define: {
+          "import.meta.env.VITE_KIDUCODE_CHANNEL": JSON.stringify(channel),
           "import.meta.env.VITE_OPENCODE_CHANNEL": JSON.stringify(channel),
         },
         worker: {

@@ -699,7 +699,7 @@ export const dict = {
   "download.hero.subtitle": "macOS, Windows, Linux용 베타 버전 사용 가능",
   "download.hero.button": "{{os}}용 다운로드",
   "download.section.terminal": "OpenCode 터미널",
-  "download.section.desktop": "OpenCode 데스크톱 (베타)",
+  "download.section.desktop": "KiduCode 데스크톱 (베타)",
   "download.section.extensions": "OpenCode 확장 프로그램",
   "download.section.integrations": "OpenCode 통합",
   "download.action.download": "다운로드",

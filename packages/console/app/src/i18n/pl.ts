@@ -707,7 +707,7 @@ export const dict = {
   "download.hero.subtitle": "Dostępne w wersji Beta na macOS, Windows i Linux",
   "download.hero.button": "Pobierz na {{os}}",
   "download.section.terminal": "Terminal OpenCode",
-  "download.section.desktop": "Pulpit OpenCode (Beta)",
+  "download.section.desktop": "Pulpit KiduCode (Beta)",
   "download.section.extensions": "Rozszerzenia OpenCode",
   "download.section.integrations": "Integracje OpenCode",
   "download.action.download": "Pobierz",

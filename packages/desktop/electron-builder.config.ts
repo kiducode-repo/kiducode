@@ -25,6 +25,8 @@ const channel = (() => {
   if (raw === "dev" || raw === "beta" || raw === "prod") return raw
   return "dev"
 })()
+const githubRepository = process.env.GH_REPO ?? process.env.GITHUB_REPOSITORY ?? "Aromal11534/Kiducode"
+const [githubOwner = "Aromal11534", githubRepo = "Kiducode"] = githubRepository.split("/")
 
 const getBase = (): Configuration => ({
   artifactName: "kiducode-desktop-${os}-${arch}.${ext}",
@@ -96,7 +98,7 @@ function getConfig() {
         appId: "com.kiducode.desktop.beta",
         productName: "KiduCode Beta",
         protocols: { name: "KiduCode Beta", schemes: ["kiducode"] },
-        publish: { provider: "github", owner: "kiducode", repo: "kiducode", channel: "latest" },
+        publish: { provider: "github", owner: githubOwner, repo: githubRepo, channel: "latest" },
         rpm: { packageName: "kiducode-beta" },
       }
     }
@@ -106,7 +108,7 @@ function getConfig() {
         appId: "com.kiducode.desktop",
         productName: "KiduCode",
         protocols: { name: "KiduCode", schemes: ["kiducode"] },
-        publish: { provider: "github", owner: "kiducode", repo: "kiducode", channel: "latest" },
+        publish: { provider: "github", owner: githubOwner, repo: githubRepo, channel: "latest" },
         rpm: { packageName: "kiducode" },
       }
     }

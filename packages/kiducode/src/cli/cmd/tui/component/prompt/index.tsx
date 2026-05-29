@@ -71,6 +71,7 @@ export type PromptProps = {
   hint?: JSX.Element
   right?: JSX.Element
   showPlaceholder?: boolean
+  showProviderLabel?: boolean
   placeholders?: {
     normal?: string[]
     shell?: string[]
@@ -198,7 +199,7 @@ export function Prompt(props: PromptProps) {
   const [workspaceCreatingDots, setWorkspaceCreatingDots] = createSignal(3)
   const [warpNotice, setWarpNotice] = createSignal<string>()
   const [cursorVersion, setCursorVersion] = createSignal(0)
-  const currentProviderLabel = createMemo(() => local.model.parsed().provider)
+  const currentProviderLabel = createMemo(() => (props.showProviderLabel === false ? undefined : local.model.parsed().provider))
   const hasRightContent = createMemo(() => Boolean(props.right))
 
   function selectWorkspace(selection: WorkspaceSelection | undefined) {
@@ -1569,7 +1570,9 @@ export function Prompt(props: PromptProps) {
                           >
                             {local.model.parsed().model}
                           </text>
-                          <text fg={fadeColor(theme.textMuted, modelMetaAlpha())}>{currentProviderLabel()}</text>
+                          <Show when={currentProviderLabel()}>
+                            {(provider) => <text fg={fadeColor(theme.textMuted, modelMetaAlpha())}>{provider()}</text>}
+                          </Show>
                           <Show when={showVariant()}>
                             <text fg={fadeColor(theme.textMuted, variantMetaAlpha())}>·</text>
                             <text>

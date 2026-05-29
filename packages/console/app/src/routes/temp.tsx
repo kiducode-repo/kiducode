@@ -158,20 +158,20 @@ export default function Home() {
 
         <footer data-component="footer">
           <div data-slot="cell">
-            <a href="https://x.com/opencode">{i18n.t("footer.x")}</a>
+            <a href="https://x.com/kiducode">{i18n.t("footer.x")}</a>
           </div>
           <div data-slot="cell">
-            <a href="https://github.com/anomalyco/opencode">{i18n.t("footer.github")}</a>
+            <a href="https://github.com/Aromal11534/Kiducode">{i18n.t("footer.github")}</a>
           </div>
           <div data-slot="cell">
-            <a href="https://opencode.ai/discord">{i18n.t("footer.discord")}</a>
+            <a href="https://kiducode.com/discord">{i18n.t("footer.discord")}</a>
           </div>
         </footer>
       </div>
 
       <div data-component="legal">
         <span>
-          ©2025 <a href="https://anoma.ly">Anomaly</a>
+          ©2025 <a href="https://kiducode.com">KiduCode</a>
         </span>
       </div>
     </main>

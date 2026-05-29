@@ -682,7 +682,7 @@ export const dict = {
   "download.hero.subtitle": "適用於 macOS、Windows 與 Linux 的 Beta 版現已提供",
   "download.hero.button": "下載 {{os}} 版",
   "download.section.terminal": "OpenCode 終端",
-  "download.section.desktop": "OpenCode 桌面版（Beta）",
+  "download.section.desktop": "KiduCode 桌面版（Beta）",
   "download.section.extensions": "OpenCode 擴充功能",
   "download.section.integrations": "OpenCode 整合",
   "download.action.download": "下載",

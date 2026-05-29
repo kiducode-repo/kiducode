@@ -3,12 +3,12 @@ import { defineConfig } from "electron-vite"
 import appPlugin from "@opencode-ai/app/vite"
 import * as fs from "node:fs/promises"
 
-const OPENCODE_SERVER_DIST = "../opencode/dist/node"
+const OPENCODE_SERVER_DIST = "../kiducode/dist/node"
 
 const channel = (() => {
-  const raw = process.env.OPENCODE_CHANNEL
+  const raw = process.env.KIDUCODE_CHANNEL ?? process.env.OPENCODE_CHANNEL
   if (raw === "dev" || raw === "beta" || raw === "prod") return raw
-  if (process.env.OPENCODE_CHANNEL === "latest") return "prod"
+  if (raw === "latest") return "prod"
   return "dev"
 })()
 
@@ -34,6 +34,7 @@ const sentry =
 export default defineConfig({
   main: {
     define: {
+      "import.meta.env.KIDUCODE_CHANNEL": JSON.stringify(channel),
       "import.meta.env.OPENCODE_CHANNEL": JSON.stringify(channel),
     },
     build: {

@@ -69,7 +69,12 @@ export function Home() {
         <box height={1} minHeight={0} flexShrink={1} />
         <box width="100%" maxWidth={75} zIndex={1000} paddingTop={1} flexShrink={0}>
           <TuiPluginRuntime.Slot name="home_prompt" mode="replace" ref={bind}>
-            <Prompt ref={bind} right={<TuiPluginRuntime.Slot name="home_prompt_right" />} placeholders={placeholder} />
+            <Prompt
+              ref={bind}
+              right={<TuiPluginRuntime.Slot name="home_prompt_right" />}
+              showProviderLabel={false}
+              placeholders={placeholder}
+            />
           </TuiPluginRuntime.Slot>
         </box>
         <TuiPluginRuntime.Slot name="home_bottom" />

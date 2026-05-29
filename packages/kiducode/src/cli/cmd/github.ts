@@ -403,8 +403,7 @@ jobs:
           persist-credentials: false
 
       - name: Run KiduCode
-        # TODO: replace with kiducode/kiducode/github@latest after KiduCode releases are published.
-        uses: anomalyco/opencode/github@latest${envStr}
+        uses: Aromal11534/Kiducode/github@latest${envStr}
         with:
           model: ${provider}/${model}`,
           )
@@ -550,7 +549,7 @@ export const GithubRunCommand = effectCmd({
           await addReaction(commentType)
         }
 
-        // Setup opencode session
+        // Setup KiduCode session
         const repoData = await fetchRepo()
         session = await runLocalEffect(
           sessionSvc.create({
@@ -570,7 +569,7 @@ export const GithubRunCommand = effectCmd({
           await runLocalEffect(sessionShare.share(session.id))
           return session.id.slice(-8)
         })()
-        console.log("opencode session", session.id)
+        console.log("kiducode session", session.id)
 
         // Handle event types:
         // REPO_EVENTS (schedule, workflow_dispatch): no issue/PR context, output to logs/PR only
@@ -940,7 +939,7 @@ export const GithubRunCommand = effectCmd({
       }
 
       async function chat(message: string, files: PromptFiles = []) {
-        console.log("Sending message to opencode...")
+        console.log("Sending message to KiduCode...")
 
         return runLocalEffect(
           Effect.gen(function* () {

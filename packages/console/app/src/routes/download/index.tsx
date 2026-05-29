@@ -125,27 +125,27 @@ export default function Download() {
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("npm i -g opencode-ai")}>
+              <button data-component="cli-row" onClick={handleCopyClick("npm i -g kiducode")}>
                 <code>
-                  npm i -g <strong>opencode-ai</strong>
+                  npm i -g <strong>kiducode</strong>
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("bun add -g opencode-ai")}>
+              <button data-component="cli-row" onClick={handleCopyClick("bun add -g kiducode")}>
                 <code>
-                  bun add -g <strong>opencode-ai</strong>
+                  bun add -g <strong>kiducode</strong>
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("brew install anomalyco/tap/opencode")}>
+              <button data-component="cli-row" onClick={handleCopyClick("brew install kiducode/tap/kiducode")}>
                 <code>
-                  brew install <strong>anomalyco/tap/opencode</strong>
+                  brew install <strong>kiducode/tap/kiducode</strong>
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("paru -S opencode")}>
+              <button data-component="cli-row" onClick={handleCopyClick("paru -S kiducode-bin")}>
                 <code>
-                  paru -S <strong>opencode</strong>
+                  paru -S <strong>kiducode-bin</strong>
                 </code>
                 <CopyStatus />
               </button>
@@ -157,9 +157,9 @@ export default function Download() {
               <span>[2]</span> {i18n.t("download.section.desktop")}
             </div>
             <div data-component="section-content">
-              <button data-component="cli-row" onClick={handleCopyClick("brew install --cask opencode-desktop")}>
+              <button data-component="cli-row" onClick={handleCopyClick("brew install --cask kiducode-desktop")}>
                 <code>
-                  brew install --cask <strong>opencode-desktop</strong>
+                  brew install --cask <strong>kiducode-desktop</strong>
                 </code>
                 <CopyStatus />
               </button>

@@ -79,9 +79,11 @@ export const PrCommand = effectCmd({
           UI.println(`Found KiduCode session: ${sessionUrl}`)
           UI.println(`Importing session...`)
 
-          const importResult = yield* Effect.promise(() =>
-            Process.text(["opencode", "import", sessionUrl], { nothrow: true }),
-          )
+          const importResult = yield* Effect.promise(async () => {
+            const result = await Process.text(["kiducode", "import", sessionUrl], { nothrow: true })
+            if (result.code === 0) return result
+            return Process.text(["opencode", "import", sessionUrl], { nothrow: true })
+          })
           if (importResult.code === 0) {
             const sessionIdMatch = importResult.text.trim().match(/Imported session: ([a-zA-Z0-9_-]+)/)
             if (sessionIdMatch) {

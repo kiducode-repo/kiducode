@@ -699,7 +699,7 @@ export const dict = {
   "download.hero.subtitle": "متاح في نسخة تجريبية لـ macOS، Windows، وLinux",
   "download.hero.button": "تنزيل لـ {{os}}",
   "download.section.terminal": "OpenCode للطرفية",
-  "download.section.desktop": "OpenCode لسطح المكتب (Beta)",
+  "download.section.desktop": "KiduCode لسطح المكتب (Beta)",
   "download.section.extensions": "امتدادات OpenCode",
   "download.section.integrations": "تكاملات OpenCode",
   "download.action.download": "تنزيل",
