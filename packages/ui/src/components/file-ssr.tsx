@@ -116,7 +116,7 @@ function DiffSSRViewer<T>(props: SSRDiffFileProps<T>) {
 
     applyViewerScheme(fileDiffRef)
 
-    // @ts-expect-error private field required for hydration
+    // @ts-ignore private field required for hydration
     fileDiffInstance.fileContainer = fileDiffRef
     fileDiffInstance.hydrate(
       local.fileDiff
