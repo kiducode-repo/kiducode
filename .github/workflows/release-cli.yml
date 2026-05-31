@@ -65,10 +65,6 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building version: $VERSION (tag: $TAG)"
 
-      - name: Install zip (Windows)
-        if: runner.os == 'Windows'
-        run: choco install zip -y
-        shell: pwsh
 
       - name: Ensure Release Exists
         shell: bash
