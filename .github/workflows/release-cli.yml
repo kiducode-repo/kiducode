@@ -49,22 +49,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: package.json
-
-      - name: Install setuptools (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: python3 -m pip install setuptools || true
-
-      - name: Install setuptools (Windows)
-        if: runner.os == 'Windows'
-        run: pip install setuptools 2>$null; exit 0
-        shell: pwsh
-
-      - name: Install dependencies
-        run: bun install
-        shell: bash
+        uses: ./.github/actions/setup-bun
 
       - name: Determine version
         id: version
