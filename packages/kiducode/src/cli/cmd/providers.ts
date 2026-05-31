@@ -363,16 +363,26 @@ export const ProvidersLoginCommand = effectCmd({
     for (const [key, value] of Object.entries(allProviders)) {
       if ((enabled ? enabled.has(key) : true) && !disabled.has(key)) providers[key] = value
     }
+    
+    // Explicitly inject google-antigravity so it appears at the top based on priority
+    if (!providers["google-antigravity"] && (!enabled || enabled.has("google-antigravity")) && !disabled.has("google-antigravity")) {
+      providers["google-antigravity"] = {
+        id: "google-antigravity",
+        name: "Google Antigravity",
+        status: "alpha",
+      } as any
+    }
     const hooks = yield* pluginSvc.list()
 
     const priority: Record<string, number> = {
       opencode: 0,
-      openai: 1,
-      "github-copilot": 2,
-      google: 3,
-      anthropic: 4,
-      openrouter: 5,
-      vercel: 6,
+      "google-antigravity": 1,
+      openai: 2,
+      "github-copilot": 3,
+      google: 4,
+      anthropic: 5,
+      openrouter: 6,
+      vercel: 7,
     }
     const pluginProviders = resolvePluginProviders({
       hooks,
@@ -394,6 +404,7 @@ export const ProvidersLoginCommand = effectCmd({
           value: x.id,
           hint: {
             opencode: "recommended",
+            "google-antigravity": "Google Antigravity",
             openai: "ChatGPT Plus/Pro or API key",
           }[x.id],
         })),

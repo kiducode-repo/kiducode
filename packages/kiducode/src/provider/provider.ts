@@ -1207,6 +1207,45 @@ export const layer = Layer.effect(
         const catalog = mapValues(modelsDev, fromModelsDevProvider)
         const database = mapValues(catalog, toPublicInfo)
 
+        const ANTIGRAVITY_MODELS = [
+          { id: "gemini-3.5-flash-medium", name: "Gemini 3.5 Flash (Medium)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.5-flash-high", name: "Gemini 3.5 Flash (High)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.5-flash-low", name: "Gemini 3.5 Flash (Low)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro (Low)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.1-pro-high", name: "Gemini 3.1 Pro (High)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "claude-sonnet-4.6-thinking", name: "Claude Sonnet 4.6 (Thinking)", input: { text: true, image: true, audio: false, video: false, pdf: true } },
+          { id: "claude-opus-4.6-thinking", name: "Claude Opus 4.6 (Thinking)", input: { text: true, image: true, audio: false, video: false, pdf: true } },
+          { id: "gpt-oss-120b-medium", name: "GPT-OSS 120B (Medium)", input: { text: true, image: false, audio: false, video: false, pdf: false } },
+        ]
+        const agModels: Record<string, Model> = {}
+        for (const m of ANTIGRAVITY_MODELS) {
+          agModels[m.id] = {
+            id: ModelID.make(m.id),
+            providerID: ProviderID.make("google-antigravity"),
+            name: m.name,
+            family: "",
+            api: { id: m.id, url: "https://cloudcode-pa.googleapis.com/v1internal", npm: "@ai-sdk/google" },
+            status: "active",
+            headers: {},
+            options: { apiKey: "opencode-oauth-dummy-key" },
+            cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
+            limit: { context: 128000, input: 128000, output: 4096 },
+            capabilities: { temperature: true, reasoning: false, attachment: true, toolcall: true, input: m.input, output: { text: true, audio: false, image: false, video: false, pdf: false }, interleaved: false },
+            release_date: "",
+            variants: {},
+          }
+        }
+
+        database["google-antigravity"] = {
+          id: ProviderID.make("google-antigravity"),
+          source: "custom",
+          name: "Google Antigravity",
+          env: [],
+          options: {},
+          models: agModels,
+        }
+
+
         const providers: Record<ProviderID, Info> = {} as Record<ProviderID, Info>
         const languages = new Map<string, LanguageModelV3>()
         const modelLoaders: {

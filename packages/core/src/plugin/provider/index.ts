@@ -12,6 +12,7 @@ import { GatewayPlugin } from "./gateway"
 import { GithubCopilotPlugin } from "./github-copilot"
 import { GitLabPlugin } from "./gitlab"
 import { GooglePlugin } from "./google"
+import { GoogleAntigravityPlugin } from "./google-antigravity"
 import { GoogleVertexAnthropicPlugin, GoogleVertexPlugin } from "./google-vertex"
 import { GroqPlugin } from "./groq"
 import { KiloPlugin } from "./kilo"
@@ -45,6 +46,7 @@ export const ProviderPlugins = [
   GithubCopilotPlugin,
   GitLabPlugin,
   GooglePlugin,
+  GoogleAntigravityPlugin,
   GoogleVertexAnthropicPlugin,
   GoogleVertexPlugin,
   GroqPlugin,

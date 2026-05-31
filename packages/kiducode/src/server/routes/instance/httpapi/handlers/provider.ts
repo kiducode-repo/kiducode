@@ -45,6 +45,21 @@ export const providerHandlers = HttpApiBuilder.group(InstanceHttpApi, "provider"
       for (const [key, value] of Object.entries(all)) {
         if ((enabled ? enabled.has(key) : true) && !disabled.has(key)) filtered[key] = value
       }
+      if (!filtered["google-antigravity"] && (!enabled || enabled.has("google-antigravity")) && !disabled.has("google-antigravity")) {
+        filtered["google-antigravity"] = {
+          id: "google-antigravity",
+          name: "Google Antigravity",
+          status: "alpha",
+          models: {
+            "gemini-3.5-flash-medium": {
+              id: "gemini-3.5-flash-medium",
+              name: "Gemini 3.5 Flash (Medium)",
+              limit: { context: 128000, input: 128000, output: 4096 }
+            }
+          },
+          env: [],
+        } as any
+      }
       const connected = yield* provider.list()
       const providers = Object.assign(
         mapValues(filtered, (item) => Provider.fromModelsDevProvider(item)),
