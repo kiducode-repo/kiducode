@@ -111,11 +111,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kiducode/kiducode"
+    "url": "https://github.com/kiducode-repo/kiducode"
   },
   "homepage": "https://kiducode.com",
   "bugs": {
-    "url": "https://github.com/kiducode/kiducode/issues"
+    "url": "https://github.com/kiducode-repo/kiducode/issues"
   },
   "license": "MIT",
   "prettier": {

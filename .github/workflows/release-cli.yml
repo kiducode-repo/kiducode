@@ -1,0 +1,158 @@
+name: Release CLI Binaries
+
+# Builds KiduCode CLI for all platforms and uploads binaries to the GitHub Release.
+# This enables: curl -fsSL https://kiducode.com/install | bash
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach binaries to (e.g. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target_os: linux
+            target_arch: x64
+            archive_ext: tar.gz
+            runner_arch: x64
+          - os: ubuntu-24.04-arm
+            target_os: linux
+            target_arch: arm64
+            archive_ext: tar.gz
+            runner_arch: arm64
+          - os: macos-latest
+            target_os: darwin
+            target_arch: arm64
+            archive_ext: zip
+            runner_arch: arm64
+          - os: macos-13
+            target_os: darwin
+            target_arch: x64
+            archive_ext: zip
+            runner_arch: x64
+          - os: windows-latest
+            target_os: windows
+            target_arch: x64
+            archive_ext: zip
+            runner_arch: x64
+
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.target_os }}-${{ matrix.target_arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install setuptools (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: python3 -m pip install setuptools || true
+
+      - name: Install setuptools (Windows)
+        if: runner.os == 'Windows'
+        run: pip install setuptools 2>$null; exit 0
+        shell: pwsh
+
+      - name: Install dependencies
+        run: bun install
+        shell: bash
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building version: $VERSION (tag: $TAG)"
+
+      - name: Build CLI binary
+        shell: bash
+        env:
+          OPENCODE_VERSION: ${{ steps.version.outputs.version }}
+          OPENCODE_RELEASE: "1"
+        run: |
+          BINARY_NAME="kiducode-${{ matrix.target_os }}-${{ matrix.target_arch }}"
+          echo "Building $BINARY_NAME..."
+          cd packages/kiducode
+
+          # Generate required files
+          bun run ./script/generate.ts || true
+
+          # Build the single-platform binary
+          bun build \
+            --compile \
+            --minify \
+            --target=bun-${{ matrix.target_os }}-${{ matrix.target_arch }} \
+            --outfile=dist/$BINARY_NAME/bin/kiducode \
+            --conditions=browser \
+            ./src/index.ts
+
+      - name: Package binary (Linux)
+        if: matrix.target_os == 'linux'
+        shell: bash
+        run: |
+          BINARY_NAME="kiducode-${{ matrix.target_os }}-${{ matrix.target_arch }}"
+          cd packages/kiducode/dist/$BINARY_NAME/bin
+          tar -czf ../../../$BINARY_NAME.tar.gz *
+
+      - name: Package binary (macOS/Windows)
+        if: matrix.target_os != 'linux'
+        shell: bash
+        run: |
+          BINARY_NAME="kiducode-${{ matrix.target_os }}-${{ matrix.target_arch }}"
+          cd packages/kiducode/dist/$BINARY_NAME/bin
+          if command -v zip &>/dev/null; then
+            zip -r ../../../$BINARY_NAME.zip *
+          else
+            # Windows fallback
+            powershell -Command "Compress-Archive -Path '*' -DestinationPath '../../../$BINARY_NAME.zip'"
+          fi
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          BINARY_NAME="kiducode-${{ matrix.target_os }}-${{ matrix.target_arch }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          if [ "${{ matrix.archive_ext }}" = "tar.gz" ]; then
+            ASSET="packages/kiducode/dist/$BINARY_NAME.tar.gz"
+          else
+            ASSET="packages/kiducode/dist/$BINARY_NAME.zip"
+          fi
+
+          echo "Uploading $ASSET to release $TAG..."
+          gh release upload "$TAG" "$ASSET" --clobber --repo "${{ github.repository }}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kiducode-${{ matrix.target_os }}-${{ matrix.target_arch }}
+          path: |
+            packages/kiducode/dist/kiducode-${{ matrix.target_os }}-${{ matrix.target_arch }}.*
