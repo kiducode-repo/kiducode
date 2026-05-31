@@ -75,4 +75,5 @@ jobs:
         run: |
           cd packages/kiducode
           # Use the native build script to ensure all plugins (like Solid/JSX) run correctly.
-          bun run ./script/build.ts --single
+          # We pass --skip-install because setup-bun already installed the native dependencies for this platform.
+          bun run ./script/build.ts --single --skip-install
