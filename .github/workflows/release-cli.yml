@@ -65,6 +65,19 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building version: $VERSION (tag: $TAG)"
 
+      - name: Install zip (Windows)
+        if: runner.os == 'Windows'
+        run: choco install zip -y
+        shell: pwsh
+
+      - name: Ensure Release Exists
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release view "$TAG" || gh release create "$TAG" --title "KiduCode $TAG" --notes "Release $TAG"
+
       - name: Build, Package, and Upload CLI binary
         shell: bash
         env:
