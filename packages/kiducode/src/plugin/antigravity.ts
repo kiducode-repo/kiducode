@@ -612,7 +612,9 @@ export async function AntigravityAuthPlugin(
             if (urlStr.includes("cloudcode-pa.googleapis.com")) {
               // Parse the model ID from the AI SDK URL (e.g. .../models/gemini-3.1-pro-low:stream...)
               const modelMatch = urlStr.match(/models\/([^:]+)/)
-              const modelName = modelMatch ? modelMatch[1] : "gemini-3-pro-low"
+              let modelName = modelMatch ? modelMatch[1] : "gemini-3.1-pro-low"
+              if (modelName.includes("gemini-3.1-pro")) modelName = "gemini-3.1-pro-low"
+              else if (modelName.includes("gemini-3.5-flash")) modelName = "gemini-3.5-flash-low"
               
               // True API Endpoint doesn't have the model in the path and doesn't accept ?key= parameter
               const urlObj = new URL(urlStr.replace(/\/models\/[^:]+/, ""))
@@ -640,9 +642,17 @@ export async function AntigravityAuthPlugin(
               // Remove the dummy API key header that ai-sdk/google injects automatically
               headers.delete("x-goog-api-key")
 
+              log.info("Sending payload to True Gateway", { modelName, requestKeys: Object.keys(sdkBody) })
+
               // Forward to the True API Gateway
               const response = await fetch(actualUrl, { ...init, headers, body: JSON.stringify(agPayload) })
               
+              if (!response.ok) {
+                const errText = await response.text();
+                log.error("True Gateway rejected request", { status: response.status, body: errText, payload: JSON.stringify(agPayload) });
+                return new Response(errText, { status: response.status, headers: response.headers });
+              }
+
               // Unwrap the {"response": ...} envelope from the streaming SSE response
               if (response.body && urlStr.includes("streamGenerateContent")) {
                 let buffer = ""
