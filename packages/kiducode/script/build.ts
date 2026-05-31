@@ -264,7 +264,14 @@ if (Script.release) {
       if (key.includes("windows")) { await $`powershell -NoProfile -Command "Compress-Archive -Path * -DestinationPath ../../${key}.zip -Force"`.cwd(`dist/${key}/bin`) } else { await $`zip -r ../../${key}.zip *`.cwd(`dist/${key}/bin`) }
     }
   }
-  await $`gh release upload v${Script.version} ./dist/*.zip ./dist/*.tar.gz --clobber --repo ${process.env.GH_REPO}`
+  const uploads = []
+  for (const key of Object.keys(binaries)) {
+    const ext = key.includes("linux") ? ".tar.gz" : ".zip"
+    uploads.push(`./dist/${key}${ext}`)
+  }
+  if (uploads.length > 0) {
+    await $`gh release upload v${Script.version} ${uploads} --clobber --repo ${process.env.GH_REPO}`
+  }
 }
 
 export { binaries }
