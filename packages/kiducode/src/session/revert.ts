@@ -16,6 +16,7 @@ export const RevertInput = Schema.Struct({
   sessionID: SessionID,
   messageID: MessageID,
   partID: Schema.optional(PartID),
+  files: Schema.optional(Schema.Array(Schema.String)),
 })
 export type RevertInput = Schema.Schema.Type<typeof RevertInput>
 
@@ -46,12 +47,16 @@ export const layer = Layer.effect(
 
       let rev: Session.Info["revert"]
       const patches: Snapshot.Patch[] = []
+      const files = input.files ? new Set(input.files) : undefined
       for (const msg of all) {
         if (msg.info.role === "user") lastUser = msg.info
         const remaining = []
         for (const part of msg.parts) {
           if (rev) {
-            if (part.type === "patch") patches.push(part)
+            if (part.type === "patch") {
+              const patchFiles = files ? part.files.filter((file) => files.has(file)) : part.files
+              if (patchFiles.length) patches.push(files ? { ...part, files: patchFiles } : part)
+            }
             continue
           }
 
@@ -69,8 +74,10 @@ export const layer = Layer.effect(
       }
 
       if (!rev) return session
+      if (files && patches.length === 0) return session
 
       rev.snapshot = session.revert?.snapshot ?? (yield* snap.track())
+      if (input.files) rev.files = Array.from(input.files)
       if (session.revert?.snapshot) yield* snap.restore(session.revert.snapshot)
       yield* snap.revert(patches)
       if (rev.snapshot) rev.diff = yield* snap.diff(rev.snapshot)

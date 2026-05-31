@@ -71,7 +71,6 @@ export type PromptProps = {
   hint?: JSX.Element
   right?: JSX.Element
   showPlaceholder?: boolean
-  showProviderLabel?: boolean
   placeholders?: {
     normal?: string[]
     shell?: string[]
@@ -199,7 +198,7 @@ export function Prompt(props: PromptProps) {
   const [workspaceCreatingDots, setWorkspaceCreatingDots] = createSignal(3)
   const [warpNotice, setWarpNotice] = createSignal<string>()
   const [cursorVersion, setCursorVersion] = createSignal(0)
-  const currentProviderLabel = createMemo(() => (props.showProviderLabel === false ? undefined : local.model.parsed().provider))
+  const currentProviderLabel = createMemo(() => local.model.parsed().provider)
   const hasRightContent = createMemo(() => Boolean(props.right))
 
   function selectWorkspace(selection: WorkspaceSelection | undefined) {
@@ -488,6 +487,39 @@ export function Prompt(props: PromptProps) {
             })
             setStore("interrupt", 0)
           }
+          dialog.clear()
+        },
+      },
+      {
+        title: "Open a session to revert AI changes",
+        name: "home.revert",
+        category: "Session",
+        enabled: !props.sessionID,
+        slashName: "revert",
+        run: () => {
+          toast.show({ message: "Open a session to use /revert", variant: "warning" })
+          dialog.clear()
+        },
+      },
+      {
+        title: "Open a session to revert all AI changes",
+        name: "home.revert.all",
+        category: "Session",
+        enabled: !props.sessionID,
+        slashName: "revert-all",
+        run: () => {
+          toast.show({ message: "Open a session to use /revert-all", variant: "warning" })
+          dialog.clear()
+        },
+      },
+      {
+        title: "Open a session to choose files to revert",
+        name: "home.revert.files",
+        category: "Session",
+        enabled: !props.sessionID,
+        slashName: "revert-files",
+        run: () => {
+          toast.show({ message: "Open a session to use /revert-files", variant: "warning" })
           dialog.clear()
         },
       },
@@ -1570,9 +1602,7 @@ export function Prompt(props: PromptProps) {
                           >
                             {local.model.parsed().model}
                           </text>
-                          <Show when={currentProviderLabel()}>
-                            {(provider) => <text fg={fadeColor(theme.textMuted, modelMetaAlpha())}>{provider()}</text>}
-                          </Show>
+                          <text fg={fadeColor(theme.textMuted, modelMetaAlpha())}>{currentProviderLabel()}</text>
                           <Show when={showVariant()}>
                             <text fg={fadeColor(theme.textMuted, variantMetaAlpha())}>·</text>
                             <text>

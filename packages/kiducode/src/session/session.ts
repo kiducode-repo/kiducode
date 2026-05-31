@@ -195,6 +195,7 @@ const Time = Schema.Struct({
 const Revert = Schema.Struct({
   messageID: MessageID,
   partID: optionalOmitUndefined(PartID),
+  files: optionalOmitUndefined(Schema.Array(Schema.String)),
   snapshot: optionalOmitUndefined(Schema.String),
   diff: optionalOmitUndefined(Schema.String),
 })

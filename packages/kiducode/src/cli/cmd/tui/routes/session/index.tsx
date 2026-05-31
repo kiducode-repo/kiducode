@@ -90,6 +90,8 @@ import { SessionRetry } from "@/session/retry"
 import { getRevertDiffFiles } from "../../util/revert-diff"
 import { OPENCODE_BASE_MODE, useBindings, useCommandShortcut, useOpencodeKeymap } from "../../keymap"
 import { PathFormatterProvider, usePathFormatter } from "../../context/path-format"
+import { DialogSelect } from "@tui/ui/dialog-select"
+import { DialogRevertFiles, type RevertFileOption } from "./dialog-revert-files"
 
 addDefaultParsers(parsers.parsers)
 
@@ -348,7 +350,7 @@ export function Session() {
         `${logo[3] ?? ""}`,
         ``,
         `  ${weak("Session")}${UI.Style.TEXT_NORMAL_BOLD}${title}${UI.Style.TEXT_NORMAL}`,
-        `  ${weak("Continue")}${UI.Style.TEXT_NORMAL_BOLD}kiducode -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
+        `  ${weak("Continue")}${UI.Style.TEXT_NORMAL_BOLD}opencode -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
         ``,
       ].join("\n"),
     )
@@ -441,6 +443,105 @@ export function Session() {
       if (!session()?.parentID || dialog.stack.length > 0) return
       func()
     }
+  }
+
+  function latestRevertMessage() {
+    const revert = session()?.revert?.messageID
+    return messages().findLast(
+      (message): message is UserMessage => (!revert || message.id < revert) && message.role === "user",
+    )
+  }
+
+  function promptFromMessage(message: UserMessage) {
+    const parts = sync.data.part[message.id] ?? []
+    return parts.reduce(
+      (agg, part) => {
+        if (part.type === "text") {
+          if (!part.synthetic) agg.input += part.text
+        }
+        if (part.type === "file") agg.parts.push(part)
+        return agg
+      },
+      { input: "", parts: [] as PromptInfo["parts"] },
+    )
+  }
+
+  function revertFilesForMessage(messageID: string): RevertFileOption[] {
+    const files = new Map<string, number>()
+    for (const message of messages()) {
+      if (message.id < messageID) continue
+      for (const part of sync.data.part[message.id] ?? []) {
+        if (part.type !== "patch") continue
+        for (const file of part.files) files.set(file, (files.get(file) ?? 0) + 1)
+      }
+    }
+    return Array.from(files, ([file, patches]) => ({ file, patches })).sort((a, b) => a.file.localeCompare(b.file))
+  }
+
+  async function revertLatest(files?: string[]) {
+    const status = sync.data.session_status?.[route.sessionID]
+    if (status?.type !== "idle") await sdk.client.session.abort({ sessionID: route.sessionID }).catch(() => {})
+    const message = latestRevertMessage()
+    if (!message) {
+      toast.show({ message: "No AI changes to revert", variant: "warning" })
+      return
+    }
+    if (files && files.length === 0) return
+    void sdk.client.session
+      .revert({
+        sessionID: route.sessionID,
+        messageID: message.id,
+        files,
+      })
+      .then(() => {
+        toBottom()
+      })
+      .catch((error) => {
+        toast.show({ message: errorMessage(error), variant: "error" })
+      })
+    prompt?.set(promptFromMessage(message))
+    dialog.clear()
+  }
+
+  function showRevertFiles() {
+    const message = latestRevertMessage()
+    if (!message) {
+      toast.show({ message: "No AI changes to revert", variant: "warning" })
+      dialog.clear()
+      return
+    }
+    const files = revertFilesForMessage(message.id)
+    if (files.length === 0) {
+      toast.show({ message: "No changed files to revert", variant: "warning" })
+      dialog.clear()
+      return
+    }
+    void DialogRevertFiles.show(dialog, files).then((selected) => {
+      if (!selected?.length) return
+      void revertLatest(selected)
+    })
+  }
+
+  function showRevertOptions() {
+    dialog.replace(() => (
+      <DialogSelect
+        title="Revert"
+        options={[
+          {
+            title: "/revert-all",
+            value: "all",
+            description: "Revert all AI file changes from the latest message",
+            onSelect: () => void revertLatest(),
+          },
+          {
+            title: "/revert-files",
+            value: "files",
+            description: "Choose changed files to revert",
+            onSelect: () => showRevertFiles(),
+          },
+        ]}
+      />
+    ))
   }
 
   const sessionCommandList = createMemo(() => [
@@ -625,6 +726,33 @@ export function Session() {
       },
     },
     {
+      title: "Revert AI changes",
+      value: "session.revert",
+      category: "Session",
+      slash: {
+        name: "revert",
+      },
+      run: () => showRevertOptions(),
+    },
+    {
+      title: "Revert all AI file changes",
+      value: "session.revert.all",
+      category: "Session",
+      slash: {
+        name: "revert-all",
+      },
+      run: () => void revertLatest(),
+    },
+    {
+      title: "Revert selected AI-changed files",
+      value: "session.revert.files",
+      category: "Session",
+      slash: {
+        name: "revert-files",
+      },
+      run: () => showRevertFiles(),
+    },
+    {
       title: "Redo",
       value: "session.redo",
       category: "Session",
@@ -636,6 +764,13 @@ export function Session() {
         dialog.clear()
         const messageID = session()?.revert?.messageID
         if (!messageID) return
+        if (session()?.revert?.files?.length) {
+          void sdk.client.session.unrevert({
+            sessionID: route.sessionID,
+          })
+          prompt?.set({ input: "", parts: [] })
+          return
+        }
         const message = messages().find((x) => x.role === "user" && x.id > messageID)
         if (!message) {
           void sdk.client.session.unrevert({

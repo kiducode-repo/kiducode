@@ -789,6 +789,7 @@ export type Session = {
   revert?: {
     messageID: string
     partID?: string
+    files?: Array<string>
     snapshot?: string
     diff?: string
   }
@@ -924,7 +925,7 @@ export type GlobalEvent = {
 export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR"
 
 /**
- * Server configuration for opencode serve and web commands
+ * Server configuration for kiducode serve and web commands
  */
 export type ServerConfig = {
   port?: number
@@ -1519,6 +1520,7 @@ export type GlobalSession = {
   revert?: {
     messageID: string
     partID?: string
+    files?: Array<string>
     snapshot?: string
     diff?: string
   }
@@ -2082,6 +2084,7 @@ export type SyncEventSessionUpdated = {
       revert?: {
         messageID: string
         partID?: string
+        files?: Array<string>
         snapshot?: string
         diff?: string
       } | null
@@ -6869,6 +6872,7 @@ export type SessionRevertData = {
   body?: {
     messageID: string
     partID?: string
+    files?: Array<string>
   }
   path: {
     sessionID: string
