@@ -1016,7 +1016,7 @@ const layer = Layer.effect(
               signals: result.signals,
             },
           },
-        } satisfies MessageV2.TextPart
+        } satisfies SessionV1.TextPart
       })
 
       yield* plugin.trigger(
