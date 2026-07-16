@@ -34,7 +34,7 @@ const args = hideBin(process.argv)
 
 function show(out: string) {
   const text = out.trimStart()
-  if (!text.startsWith("opencode ")) {
+  if (!text.startsWith("kiducode ")) {
     process.stderr.write(UI.logo() + EOL + EOL)
     process.stderr.write(text + EOL)
     return
@@ -44,7 +44,7 @@ function show(out: string) {
 
 const cli = yargs(args)
   .parserConfiguration({ "populate--": true })
-  .scriptName("opencode")
+  .scriptName("kiducode")
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -73,6 +73,7 @@ const cli = yargs(args)
     Heap.start()
 
     process.env.AGENT = "1"
+    process.env.KIDUCODE = "1"
     process.env.OPENCODE = "1"
     process.env.OPENCODE_PID = String(process.pid)
   })

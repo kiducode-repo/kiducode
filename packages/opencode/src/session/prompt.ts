@@ -56,6 +56,7 @@ import { SessionTable } from "@opencode-ai/core/session/sql"
 import { SessionReminders } from "./reminders"
 import { SessionTools } from "./tools"
 import { LLMEvent } from "@opencode-ai/llm"
+import { ManglishPreprocess } from "@/manglish-preprocess/preprocess"
 
 // @ts-ignore
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -995,6 +996,28 @@ const layer = Layer.effect(
       const resolvedParts = yield* Effect.forEach(input.parts, resolvePart, { concurrency: "unbounded" }).pipe(
         Effect.map((x) => x.flat().map(assign)),
       )
+      const manglishEnabled = process.env.KIDUCODE_MANGLISH_PREPROCESS !== "0"
+      const preprocessedParts = resolvedParts.map((part) => {
+        if (!manglishEnabled) return part
+        if (part.type !== "text" || part.synthetic || part.ignored) return part
+        const result = ManglishPreprocess.preprocessManglishPrompt(part.text)
+        if (!result.changed) return part
+        return {
+          ...part,
+          text: ManglishPreprocess.formatForAgent(result),
+          metadata: {
+            ...part.metadata,
+            kiducodeManglish: {
+              original: result.original,
+              normalized: result.normalized,
+              style: result.style,
+              intent: result.intent,
+              confidence: result.confidence,
+              signals: result.signals,
+            },
+          },
+        } satisfies MessageV2.TextPart
+      })
 
       yield* plugin.trigger(
         "chat.message",
@@ -1005,10 +1028,10 @@ const layer = Layer.effect(
           messageID: input.messageID,
           variant: input.variant,
         },
-        { message: info, parts: resolvedParts },
+        { message: info, parts: preprocessedParts },
       )
 
-      const parts = yield* Effect.forEach(resolvedParts, (part) =>
+      const parts = yield* Effect.forEach(preprocessedParts, (part) =>
         part.type === "file" && part.mime.startsWith("image/")
           ? image.normalize(part).pipe(
               Effect.catchIf(
