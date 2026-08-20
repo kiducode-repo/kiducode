@@ -3,6 +3,7 @@
 import { $ } from "bun"
 import fs from "fs"
 import path from "path"
+import crypto from "crypto"
 import { fileURLToPath } from "url"
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
 
@@ -267,7 +268,18 @@ if (Script.release) {
   const uploads = []
   for (const key of Object.keys(binaries)) {
     const ext = key.includes("linux") ? ".tar.gz" : ".zip"
-    uploads.push(`./dist/${key}${ext}`)
+    const fileName = `${key}${ext}`
+    const filePath = `./dist/${fileName}`
+    uploads.push(filePath)
+
+    // Generate SHA256 checksum
+    const fileBuffer = await fs.promises.readFile(filePath)
+    const hashSum = crypto.createHash('sha256')
+    hashSum.update(fileBuffer)
+    const hex = hashSum.digest('hex')
+    const sha256Path = `${filePath}.sha256`
+    await fs.promises.writeFile(sha256Path, `${hex}  ${fileName}\n`)
+    uploads.push(sha256Path)
   }
   if (uploads.length > 0) {
     await $`gh release upload v${Script.version} ${uploads} --clobber --repo ${process.env.GH_REPO}`
