@@ -286,6 +286,7 @@ export async function pollDeviceCodeToken(
 const HTML_SUCCESS = `<!doctype html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>KiduCode - Antigravity Authorization Successful</title>
     <style>
       body {
@@ -334,6 +335,7 @@ const HTML_SUCCESS = `<!doctype html>
 const HTML_ERROR = (error: string) => `<!doctype html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>KiduCode - Antigravity Authorization Failed</title>
     <style>
       body {
@@ -424,7 +426,7 @@ async function startOAuthServer(): Promise<{ port: number; redirectUri: string }
         const errorMsg = errorDescription || error
         pendingOAuth?.reject(new Error(errorMsg))
         pendingOAuth = undefined
-        res.writeHead(200, { "Content-Type": "text/html" })
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
         res.end(HTML_ERROR(errorMsg))
         return
       }
@@ -433,7 +435,7 @@ async function startOAuthServer(): Promise<{ port: number; redirectUri: string }
         const errorMsg = "Missing authorization code"
         pendingOAuth?.reject(new Error(errorMsg))
         pendingOAuth = undefined
-        res.writeHead(400, { "Content-Type": "text/html" })
+        res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" })
         res.end(HTML_ERROR(errorMsg))
         return
       }
@@ -442,7 +444,7 @@ async function startOAuthServer(): Promise<{ port: number; redirectUri: string }
         const errorMsg = "Invalid state - potential CSRF attack"
         pendingOAuth?.reject(new Error(errorMsg))
         pendingOAuth = undefined
-        res.writeHead(400, { "Content-Type": "text/html" })
+        res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" })
         res.end(HTML_ERROR(errorMsg))
         return
       }
@@ -454,7 +456,7 @@ async function startOAuthServer(): Promise<{ port: number; redirectUri: string }
         .then((tokens) => current.resolve(tokens))
         .catch((err) => current.reject(err))
 
-      res.writeHead(200, { "Content-Type": "text/html" })
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
       res.end(HTML_SUCCESS)
       return
     }
@@ -545,6 +547,48 @@ export async function AntigravityAuthPlugin(
         if (auth.type !== "oauth") return {}
 
         let refreshPromise: Promise<RefreshResult> | undefined
+        let projectPromise: Promise<string> | undefined
+
+        const resolveAccountProject = async (accessToken: string): Promise<string> => {
+          if (!projectPromise) {
+            projectPromise = (async () => {
+              // These numeric enum values match the native Antigravity client.
+              // String values such as "ANTIGRAVITY" are rejected by loadCodeAssist.
+              const metadata = { ideType: 9, platform: 3, pluginType: 2 }
+              const response = await fetch(
+                "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist",
+                {
+                  method: "POST",
+                  headers: {
+                    authorization: `Bearer ${accessToken}`,
+                    "content-type": "application/json",
+                    "User-Agent": "antigravity/2.0.0 windows/amd64",
+                    "X-Goog-Api-Client": "google-cloud-sdk vscode_cloudshelleditor/0.1",
+                    "Client-Metadata": JSON.stringify(metadata),
+                  },
+                  body: JSON.stringify({ metadata }),
+                },
+              )
+              if (!response.ok) {
+                const detail = await response.text().catch(() => "")
+                throw new Error(
+                  `Antigravity account discovery failed (${response.status})${detail ? `: ${detail}` : ""}`,
+                )
+              }
+              const payload = (await response.json()) as {
+                cloudaicompanionProject?: string | { id?: string }
+              }
+              const candidate = payload.cloudaicompanionProject
+              const project = typeof candidate === "string" ? candidate : candidate?.id
+              if (!project) throw new Error("Antigravity did not return an account project.")
+              return project
+            })().catch((error) => {
+              projectPromise = undefined
+              throw error
+            })
+          }
+          return projectPromise
+        }
 
         return {
           apiKey: OAUTH_DUMMY_KEY,
@@ -610,24 +654,32 @@ export async function AntigravityAuthPlugin(
 
             const urlStr = requestInput instanceof Request ? requestInput.url : requestInput.toString()
             if (urlStr.includes("cloudcode-pa.googleapis.com")) {
+              const accountProject = await resolveAccountProject(currentAuth.access)
               // Parse the model ID from the AI SDK URL (e.g. .../models/gemini-3.1-pro-low:stream...)
               const modelMatch = urlStr.match(/models\/([^:]+)/)
               let modelName = modelMatch ? modelMatch[1] : "gemini-3.1-pro-low"
               if (modelName.includes("gemini-3.1-pro")) modelName = "gemini-3.1-pro-low"
               else if (modelName.includes("gemini-3.5-flash")) modelName = "gemini-3.5-flash-low"
-              
+
               // True API Endpoint doesn't have the model in the path and doesn't accept ?key= parameter
-              const urlObj = new URL(urlStr.replace(/\/models\/[^:]+/, ""))
+              const urlObj = new URL(
+                urlStr
+                  .replace(/\/models\/[^:]+/, "")
+                  .replace(
+                    "https://cloudcode-pa.googleapis.com",
+                    "https://daily-cloudcode-pa.googleapis.com",
+                  ),
+              )
               urlObj.searchParams.delete("key")
               const actualUrl = urlObj.toString()
               // Grab the native Gemini-formatted payload from the SDK
               const bodyStr = init?.body?.toString() || "{}"
               let sdkBody = {}
-              try { sdkBody = JSON.parse(bodyStr) } catch (e) {}
+              try { sdkBody = JSON.parse(bodyStr) } catch (e) { }
 
               // Wrap it in the Antigravity envelope
               const agPayload = {
-                project: "automation-496002",
+                project: accountProject,
                 model: modelName,
                 request: sdkBody,
                 userAgent: "antigravity",
@@ -637,8 +689,8 @@ export async function AntigravityAuthPlugin(
               // Inject the mandatory Google Cloud authentication headers
               headers.set("User-Agent", "antigravity/2.0.0 windows/amd64")
               headers.set("X-Goog-Api-Client", "google-cloud-sdk vscode_cloudshelleditor/0.1")
-              headers.set("Client-Metadata", JSON.stringify({ ideType: "ANTIGRAVITY", platform: "MACOS", pluginType: "GEMINI" }))
-              
+              headers.set("Client-Metadata", JSON.stringify({ ideType: 9, platform: 3, pluginType: 2 }))
+
               // Remove the dummy API key header that ai-sdk/google injects automatically
               headers.delete("x-goog-api-key")
 
@@ -646,7 +698,7 @@ export async function AntigravityAuthPlugin(
 
               // Forward to the True API Gateway
               const response = await fetch(actualUrl, { ...init, headers, body: JSON.stringify(agPayload) })
-              
+
               if (!response.ok) {
                 const errText = await response.text();
                 log.error("True Gateway rejected request", { status: response.status, body: errText, payload: JSON.stringify(agPayload) });

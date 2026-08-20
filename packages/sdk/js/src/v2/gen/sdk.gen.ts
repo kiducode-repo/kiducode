@@ -569,9 +569,9 @@ export class Global extends HeyApiClient {
   }
 
   /**
-   * Upgrade opencode
+   * Upgrade KiduCode
    *
-   * Upgrade opencode to the specified version or latest if not specified.
+   * Upgrade KiduCode to the specified version or latest if not specified.
    */
   public upgrade<ThrowOnError extends boolean = false>(
     parameters?: {

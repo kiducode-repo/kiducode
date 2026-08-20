@@ -25,7 +25,7 @@ export const errorLayer = HttpRouter.middleware<{ handles: unknown }>()((effect)
       return Effect.succeed(
         HttpServerResponse.jsonUnsafe(
           new NamedError.Unknown({
-            message: "Unexpected server error. Check server logs for details.",
+            message: `Unexpected server error: ${JSON.stringify(error, null, 2) || String(error)}. Check server logs for details.`,
             ref,
           }).toObject(),
           { status: 500 },

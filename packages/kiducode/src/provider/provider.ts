@@ -1208,14 +1208,22 @@ export const layer = Layer.effect(
         const database = mapValues(catalog, toPublicInfo)
 
         const ANTIGRAVITY_MODELS = [
+          { id: "gemini-3.7-flash-medium", name: "Gemini 3.7 Flash (Medium)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.7-flash-high", name: "Gemini 3.7 Flash (High)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.7-flash-low", name: "Gemini 3.7 Flash (Low)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.7-flash-tiered", name: "Gemini 3.7 Flash (Tiered)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.6-flash-medium", name: "Gemini 3.6 Flash (Medium)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.6-flash-high", name: "Gemini 3.6 Flash (High)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.6-flash-low", name: "Gemini 3.6 Flash (Low)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.6-flash-tiered", name: "Gemini 3.6 Flash (Tiered)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "gemini-3.5-flash-extra-low", name: "Gemini 3.5 Flash (Extra Low)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
+          { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", input: { text: true, image: true, audio: false, video: false, pdf: true } },
+          { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 (Thinking)", input: { text: true, image: true, audio: false, video: false, pdf: true } },
           { id: "gemini-3.5-flash-medium", name: "Gemini 3.5 Flash (Medium)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
           { id: "gemini-3.5-flash-high", name: "Gemini 3.5 Flash (High)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
           { id: "gemini-3.5-flash-low", name: "Gemini 3.5 Flash (Low)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
           { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro (Low)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
           { id: "gemini-3.1-pro-high", name: "Gemini 3.1 Pro (High)", input: { text: true, image: true, audio: true, video: true, pdf: true } },
-          { id: "claude-sonnet-4.6-thinking", name: "Claude Sonnet 4.6 (Thinking)", input: { text: true, image: true, audio: false, video: false, pdf: true } },
-          { id: "claude-opus-4.6-thinking", name: "Claude Opus 4.6 (Thinking)", input: { text: true, image: true, audio: false, video: false, pdf: true } },
-          { id: "gpt-oss-120b-medium", name: "GPT-OSS 120B (Medium)", input: { text: true, image: false, audio: false, video: false, pdf: false } },
         ]
         const agModels: Record<string, Model> = {}
         for (const m of ANTIGRAVITY_MODELS) {
