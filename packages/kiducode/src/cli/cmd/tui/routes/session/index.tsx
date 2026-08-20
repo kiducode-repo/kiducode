@@ -1087,16 +1087,26 @@ export function Session() {
 
           if (options === null) return
 
-          const transcript = formatTranscript(
-            sessionData,
-            sessionMessages.map((msg) => ({ info: msg, parts: sync.data.part[msg.id] ?? [] })),
-            {
-              thinking: options.thinking,
-              toolDetails: options.toolDetails,
-              assistantMetadata: options.assistantMetadata,
-              providers: sync.data.provider,
-            },
-          )
+          const isJson = options.filename.trim().toLowerCase().endsWith(".json")
+          const transcript = isJson
+            ? JSON.stringify(
+                {
+                  session: sessionData,
+                  messages: sessionMessages.map((msg) => ({ info: msg, parts: sync.data.part[msg.id] ?? [] })),
+                },
+                null,
+                2,
+              )
+            : formatTranscript(
+                sessionData,
+                sessionMessages.map((msg) => ({ info: msg, parts: sync.data.part[msg.id] ?? [] })),
+                {
+                  thinking: options.thinking,
+                  toolDetails: options.toolDetails,
+                  assistantMetadata: options.assistantMetadata,
+                  providers: sync.data.provider,
+                },
+              )
 
           if (options.openWithoutSaving) {
             // Just open in editor without saving

@@ -563,6 +563,8 @@ export async function AntigravityAuthPlugin(
               let modelName = modelMatch ? modelMatch[1] : "gemini-3.1-pro-low"
               if (modelName.includes("gemini-3.1-pro")) modelName = "gemini-3.1-pro-low"
               else if (modelName.includes("gemini-3.5-flash")) modelName = "gemini-3.5-flash-low"
+              else if (modelName.includes("gemini-3.7-flash")) modelName = "gemini-3.7-flash-low"
+              else if (modelName.includes("deepseek-v4-flash")) modelName = "deepseek-v4-flash"
 
               // True API Endpoint doesn't have the model in the path and doesn't accept ?key= parameter
               const urlObj = new URL(

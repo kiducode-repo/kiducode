@@ -40,39 +40,65 @@ export const layer = Layer.effect(
     const fs = yield* AppFileSystem.Service
     const proc = yield* AppProcess.Service
 
+    const cache = {
+      find: new Map<string, Effect.Effect<Repo | undefined>>(),
+      remote: new Map<string, Effect.Effect<string | undefined>>(),
+      roots: new Map<string, Effect.Effect<string[]>>(),
+    }
+
     const find = Effect.fn("Git.find")(function* (input: AbsolutePath) {
-      const dotgit = yield* fs.up({ targets: [".git"], start: input }).pipe(
-        Effect.map((matches) => matches[0]),
-        Effect.catch(() => Effect.succeed(undefined)),
-      )
-      if (!dotgit) return undefined
+      if (cache.find.has(input)) return yield* cache.find.get(input)!
+      const effect = yield* Effect.cached(Effect.gen(function* () {
+        const dotgit = yield* fs.up({ targets: [".git"], start: input }).pipe(
+          Effect.map((matches) => matches[0]),
+          Effect.catch(() => Effect.succeed(undefined)),
+        )
+        if (!dotgit) return undefined
 
-      const cwd = path.dirname(dotgit)
-      const git = run(cwd, proc)
-      const topLevel = yield* git(["rev-parse", "--show-toplevel"])
-      const commonDir = yield* git(["rev-parse", "--git-common-dir"])
-      if (commonDir.exitCode !== 0) return undefined
+        const cwd = path.dirname(dotgit)
+        const git = run(cwd, proc)
+        const topLevel = yield* git(["rev-parse", "--show-toplevel"])
+        const commonDir = yield* git(["rev-parse", "--git-common-dir"])
+        if (commonDir.exitCode !== 0) return undefined
 
-      return {
-        directory: AbsolutePath.make(topLevel.exitCode === 0 ? resolvePath(cwd, topLevel.text) : cwd),
-        store: AbsolutePath.make(resolvePath(cwd, commonDir.text)),
-      } satisfies Repo
+        return {
+          directory: AbsolutePath.make(topLevel.exitCode === 0 ? resolvePath(cwd, topLevel.text) : cwd),
+          store: AbsolutePath.make(resolvePath(cwd, commonDir.text)),
+        } satisfies Repo
+      }))
+      
+      cache.find.set(input, effect)
+      return yield* effect
     })
 
     const remote = Effect.fn("Git.remote")(function* (repo: Repo, name = "origin") {
-      const result = yield* run(repo.directory, proc)(["remote", "get-url", name])
-      if (result.exitCode !== 0) return undefined
-      return result.text.trim() || undefined
+      const key = `${repo.directory}:${name}`
+      if (cache.remote.has(key)) return yield* cache.remote.get(key)!
+      const effect = yield* Effect.cached(Effect.gen(function* () {
+        const result = yield* run(repo.directory, proc)(["remote", "get-url", name])
+        if (result.exitCode !== 0) return undefined
+        return result.text.trim() || undefined
+      }))
+
+      cache.remote.set(key, effect)
+      return yield* effect
     })
 
     const roots = Effect.fn("Git.roots")(function* (repo: Repo) {
-      const result = yield* run(repo.directory, proc)(["rev-list", "--max-parents=0", "HEAD"])
-      if (result.exitCode !== 0) return []
-      return result.text
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .toSorted()
+      const key = repo.directory
+      if (cache.roots.has(key)) return yield* cache.roots.get(key)!
+      const effect = yield* Effect.cached(Effect.gen(function* () {
+        const result = yield* run(repo.directory, proc)(["rev-list", "--max-parents=0", "HEAD"])
+        if (result.exitCode !== 0) return []
+        return result.text
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .toSorted()
+      }))
+
+      cache.roots.set(key, effect)
+      return yield* effect
     })
 
     return Service.of({ find, remote, roots })

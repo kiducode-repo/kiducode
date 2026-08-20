@@ -824,6 +824,17 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: true,
         async getModel(_sdk: any, modelID: string, _options?: Record<string, any>) {
           // Model IDs use Unified API format: provider/model (e.g., "anthropic/claude-sonnet-4-5")
+          if (modelID.startsWith("openai/")) {
+            const { createOpenAI } = await import("@ai-sdk/openai")
+            const openai = createOpenAI({ fetch: (aigateway as any).fetch })
+            return openai.responses(modelID.slice("openai/".length))
+          }
+          if (modelID.startsWith("anthropic/")) {
+            const { createAnthropic } = await import("@ai-sdk/anthropic")
+            const anthropic = createAnthropic({ fetch: (aigateway as any).fetch })
+            return anthropic.messages(modelID.slice("anthropic/".length))
+          }
+
           return aigateway(unified(modelID))
         },
         options: {},
