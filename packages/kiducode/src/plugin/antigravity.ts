@@ -15,17 +15,8 @@ const oAuthClientSecretPart2 = "LdLJ1mLB8sXC4z6qDAf"
 const CLIENT_SECRET = oAuthClientSecretPart1 + oAuthClientSecretPart2
 const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/auth"
 const TOKEN_URL = "https://oauth2.googleapis.com/token"
-// Google's device authorization endpoint for headless/SSH flows
-const DEVICE_AUTHORIZATION_URL = "https://oauth2.googleapis.com/device/code"
-const DEVICE_CODE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code"
+const HEADLESS_REDIRECT_URI = "https://antigravity.google/oauth-callback"
 const SCOPE = "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/cclog https://www.googleapis.com/auth/experimentsandconfigs openid"
-
-// Device code polling parameters
-const DEVICE_CODE_DEFAULT_INTERVAL_MS = 5_000
-const DEVICE_CODE_MIN_INTERVAL_MS = 1_000
-const DEVICE_CODE_SLOW_DOWN_INCREMENT_MS = 5_000
-const DEVICE_CODE_DEFAULT_EXPIRES_MS = 5 * 60 * 1000
-const OAUTH_POLLING_SAFETY_MARGIN_MS = 3_000
 
 // Loopback OAuth server configuration
 const OAUTH_HOST = "127.0.0.1"
@@ -43,8 +34,8 @@ const ANTIGRAVITY_API_BASE = "https://antigravity.google/api/v1"
 interface AntigravityAuthPluginOptions {
   authorizeUrl?: string
   tokenUrl?: string
-  deviceAuthorizationUrl?: string
   apiBase?: string
+  redirectUri?: string
 }
 
 interface PkceCodes {
@@ -137,7 +128,7 @@ function buildAuthorizeUrl(
   const params = new URLSearchParams({
     response_type: "code",
     client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: options.redirectUri ?? REDIRECT_URI,
     scope: SCOPE,
     code_challenge: pkce.challenge,
     code_challenge_method: "S256",
@@ -160,7 +151,7 @@ async function exchangeCodeForTokens(
     body: new URLSearchParams({
       grant_type: "authorization_code",
       code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: options.redirectUri ?? REDIRECT_URI,
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       code_verifier: pkce.verifier,
@@ -194,94 +185,6 @@ async function refreshAccessToken(
   return response.json() as Promise<TokenResponse>
 }
 
-export interface DeviceCodeResponse {
-  device_code: string
-  user_code: string
-  verification_uri: string
-  verification_uri_complete?: string
-  expires_in?: number
-  interval?: number
-}
-
-interface DeviceTokenErrorBody {
-  error?: string
-  error_description?: string
-}
-
-export async function requestDeviceCode(
-  options: AntigravityAuthPluginOptions = {},
-): Promise<DeviceCodeResponse> {
-  const response = await fetch(options.deviceAuthorizationUrl ?? DEVICE_AUTHORIZATION_URL, {
-    method: "POST",
-    headers: authHeaders(),
-    body: new URLSearchParams({
-      client_id: CLIENT_ID,
-      scope: SCOPE,
-    }).toString(),
-  })
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "")
-    throw new Error(`Antigravity device code request failed (${response.status})${detail ? `: ${detail}` : ""}`)
-  }
-  const json = (await response.json()) as DeviceCodeResponse
-  if (!json.device_code || !json.user_code || !json.verification_uri) {
-    throw new Error("Antigravity device code response is missing device_code / user_code / verification_uri")
-  }
-  return json
-}
-
-function positiveSecondsToMs(value: unknown, defaultMs: number): number {
-  const seconds = Number(value)
-  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : defaultMs
-}
-
-export async function pollDeviceCodeToken(
-  device: DeviceCodeResponse,
-  options: AntigravityAuthPluginOptions & { sleep?: (ms: number) => Promise<void>; now?: () => number } = {},
-): Promise<TokenResponse> {
-  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
-  const now = options.now ?? (() => Date.now())
-  const expiresInMs = positiveSecondsToMs(device.expires_in, DEVICE_CODE_DEFAULT_EXPIRES_MS)
-  const deadline = now() + expiresInMs
-  let intervalMs = Math.max(
-    positiveSecondsToMs(device.interval, DEVICE_CODE_DEFAULT_INTERVAL_MS),
-    DEVICE_CODE_MIN_INTERVAL_MS,
-  )
-
-  while (now() < deadline) {
-    const response = await fetch(options.tokenUrl ?? TOKEN_URL, {
-      method: "POST",
-      headers: authHeaders(),
-      body: new URLSearchParams({
-        grant_type: DEVICE_CODE_GRANT_TYPE,
-        client_id: CLIENT_ID,
-        device_code: device.device_code,
-      }).toString(),
-    })
-    if (response.ok) return (await response.json()) as TokenResponse
-
-    const body = (await response.json().catch(() => ({}))) as DeviceTokenErrorBody
-    const remaining = Math.max(0, deadline - now())
-    if (body.error === "authorization_pending") {
-      await sleep(Math.min(intervalMs + OAUTH_POLLING_SAFETY_MARGIN_MS, remaining))
-      continue
-    }
-    if (body.error === "slow_down") {
-      intervalMs += DEVICE_CODE_SLOW_DOWN_INCREMENT_MS
-      await sleep(Math.min(intervalMs + OAUTH_POLLING_SAFETY_MARGIN_MS, remaining))
-      continue
-    }
-    if (body.error === "access_denied" || body.error === "authorization_denied") {
-      throw new Error("Antigravity device authorization was denied")
-    }
-    if (body.error === "expired_token") {
-      throw new Error("Antigravity device code expired - please re-run login")
-    }
-    const detail = body.error_description ?? body.error ?? ""
-    throw new Error(`Antigravity device token exchange failed (${response.status})${detail ? `: ${detail}` : ""}`)
-  }
-  throw new Error("Antigravity device authorization timed out")
-}
 
 const HTML_SUCCESS = `<!doctype html>
 <html>
@@ -800,15 +703,21 @@ export async function AntigravityAuthPlugin(
           label: "Google Antigravity OAuth (Headless / SSH)",
           type: "oauth",
           authorize: async () => {
-            const device = await requestDeviceCode(options)
-            const browserUrl = device.verification_uri_complete ?? device.verification_uri
+            const pkce = await generatePKCE()
+            const state = generateState()
+            const nonce = generateState()
+            const authUrl = buildAuthorizeUrl(pkce, state, nonce, { ...options, redirectUri: HEADLESS_REDIRECT_URI })
+
             return {
-              url: browserUrl,
-              instructions: `Open ${device.verification_uri} on any device and enter code: ${device.user_code}`,
-              method: "auto" as const,
-              callback: async () => {
+              url: authUrl,
+              instructions: "Open the URL below in your browser, authenticate, and copy the provided code.",
+              method: "code" as const,
+              callback: async (code?: string) => {
+                if (!code) {
+                  return { type: "failed" as const }
+                }
                 try {
-                  const tokens = await pollDeviceCodeToken(device, options)
+                  const tokens = await exchangeCodeForTokens(code, pkce, { ...options, redirectUri: HEADLESS_REDIRECT_URI })
                   return {
                     type: "success" as const,
                     refresh: tokens.refresh_token,
@@ -816,7 +725,7 @@ export async function AntigravityAuthPlugin(
                     expires: Date.now() + (tokens.expires_in ?? 3600) * 1000,
                   }
                 } catch (err) {
-                  log.error("antigravity device code callback failed", { error: err })
+                  log.error("antigravity headless oauth callback failed", { error: err })
                   return { type: "failed" as const }
                 }
               },
