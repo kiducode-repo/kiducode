@@ -629,23 +629,23 @@ function App() {
     if (!terminalTitleEnabled()) return
 
     if (route.data.type === "home") {
-      setTerminalTitle(renderer, "OpenCode")
+      setTerminalTitle(renderer, "KiduCode")
       return
     }
 
     if (route.data.type === "session") {
       const title = session?.title
       if (!title || isFallbackTitle(title)) {
-        setTerminalTitle(renderer, "OpenCode")
+        setTerminalTitle(renderer, "KiduCode")
         return
       }
 
-      setTerminalTitle(renderer, `OC | ${title.length > 40 ? title.slice(0, 37) + "…" : title}`)
+      setTerminalTitle(renderer, `KC | ${title.length > 40 ? title.slice(0, 37) + "…" : title}`)
       return
     }
 
     if (route.data.type === "plugin") {
-      setTerminalTitle(renderer, `OC | ${route.data.name}`)
+      setTerminalTitle(renderer, `KC | ${route.data.name}`)
     }
   })
 
@@ -1042,7 +1042,7 @@ function App() {
         ? [
             {
               name: "opencode.update",
-              title: "Update OpenCode",
+              title: "Update KiduCode",
               slash: { name: "update" },
               run: () => updater.open?.("manual"),
               category: "System",
@@ -1148,7 +1148,7 @@ function App() {
         name: "docs.open",
         title: "Open docs",
         run: () => {
-          openUrl("https://opencode.ai/docs").catch(() => {})
+          openUrl("https://kiducode.com/docs").catch(() => {})
           dialog.clear()
         },
         category: "System",

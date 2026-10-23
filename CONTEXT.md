@@ -40,6 +40,8 @@ At the earlier feature-grouping level, these represent approximately 36 major fe
 - `kiducode.json`, `kiducode.jsonc`, and `.kiducode` discovery with OpenCode fallback.
 - KiduCode XDG paths and database names with legacy OpenCode database fallback.
 - KiduCode desktop identity, CORS origins, deep-link support, and built-in themes.
+- The TUI homepage uses the KiduCode wordmark and product labels.
+- Theme selectors expose only `mint-kiducode` and `orange-kiducode`; legacy upstream theme names remain hidden compatibility inputs in mini mode.
 - Agent system context does not disclose the underlying model or provider.
 
 ## Areas Not Selected
@@ -87,7 +89,7 @@ Do not publish a release until all distribution paths are reviewed against KiduC
 
 ## Deferred Work Within Selected Areas
 
-- Complete KiduCode UI redesign, copy, localization, logos, and visual polish.
+- Complete the remaining desktop/web KiduCode copy, localization, logos, and visual polish beyond the migrated TUI homepage.
 - Add a current-TUI selected-file revert dialog using the migrated `files: string[]` API.
 - Live-test Antigravity browser login, headless login, refresh, project discovery, and inference with a disposable account.
 - Verify the public OAuth client credentials are intended for installed-client distribution; rotate them otherwise.

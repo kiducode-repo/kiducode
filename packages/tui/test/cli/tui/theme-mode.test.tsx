@@ -1,11 +1,8 @@
 /** @jsxImportSource @opentui/solid */
 import { testRender } from "@opentui/solid"
 import { expect, test } from "bun:test"
-import { RGBA } from "@opentui/core"
 import { createTuiResolvedConfig } from "../../fixture/tui-runtime"
 import { getOpenCodeTheme } from "../../../src/theme"
-import opencodeSource from "../../../src/theme/assets/opencode.json" with { type: "json" }
-import type { ThemeV1Json } from "@opencode/theme/tui/v1"
 import { ConfigProvider } from "../../../src/config"
 import { ThemeContextProvider, ThemeProvider, type ThemeError, useTheme, useThemes } from "../../../src/context/theme"
 
@@ -17,21 +14,7 @@ async function wait(fn: () => boolean) {
   }
 }
 
-test("uses an available mode while retaining the pinned preference", async () => {
-  const opencodeV1 = opencodeSource as ThemeV1Json
-  const lightOnly = structuredClone(opencodeV1)
-  lightOnly.theme.background = "#eeeeee"
-  lightOnly.theme.text = "#111111"
-  const dual = structuredClone(opencodeV1)
-  dual.theme.background = { light: "#eeeeee", dark: "#111111" }
-  dual.theme.text = { light: "#111111", dark: "#eeeeee" }
-  const darkOnly = structuredClone(opencodeV1)
-  darkOnly.theme.background = "#111111"
-  darkOnly.theme.text = "#eeeeee"
-  const native = {
-    base: { ...getOpenCodeTheme().base, text: { ...getOpenCodeTheme().base.text, base: "#abcdef" } },
-    dark: { hue: getOpenCodeTheme().dark.hue },
-  } as const
+test("offers only KiduCode themes while retaining mode controls", async () => {
   let themes: ReturnType<typeof useThemes> | undefined
 
   function Probe() {
@@ -47,11 +30,8 @@ test("uses an available mode while retaining the pinned preference", async () =>
 
   const app = await testRender(
     () => (
-      <ConfigProvider config={createTuiResolvedConfig({ theme: { name: "light-only", mode: "dark" } })}>
-        <ThemeProvider
-          mode="dark"
-          source={{ discover: () => Promise.resolve({ "light-only": lightOnly, "dark-only": darkOnly, dual, native }) }}
-        >
+      <ConfigProvider config={createTuiResolvedConfig({ theme: { name: "mint-kiducode", mode: "dark" } })}>
+        <ThemeProvider mode="dark" source={{ discover: () => Promise.resolve({}) }}>
           <Probe />
         </ThemeProvider>
       </ConfigProvider>
@@ -62,22 +42,12 @@ test("uses an available mode while retaining the pinned preference", async () =>
 
   try {
     await wait(() => themes?.ready === true)
-    expect(current().mode()).toBe("light")
-    expect(current().modes()).toEqual(["light"])
-    expect(current().supports("dark")).toBeFalse()
-    expect(current().setMode("dark")).toBeFalse()
-    expect(current().set("dark-only")).toBeTrue()
-    await wait(() => current().mode() === "dark")
+    expect(current().selected).toBe("mint-kiducode")
     expect(current().modes()).toEqual(["dark"])
-    expect(current().set("light-only")).toBeTrue()
-    await wait(() => current().mode() === "light")
-    expect(current().set("dual")).toBeTrue()
-    await wait(() => current().mode() === "dark")
-    expect(current().modes()).toEqual(["light", "dark"])
-    expect(current().set("native")).toBeTrue()
-    await wait(() => current().selected === "native")
-    expect(current().modes()).toEqual(["dark"])
-    expect(current().current.text.base.equals(RGBA.fromHex("#abcdef"))).toBeTrue()
+    expect(current().supports("dark")).toBeTrue()
+    expect(current().set("orange-kiducode")).toBeTrue()
+    expect(current().selected).toBe("orange-kiducode")
+    expect(current().set("opencode")).toBeFalse()
   } finally {
     app.renderer.destroy()
   }
@@ -93,7 +63,7 @@ test.each([
       light: getOpenCodeTheme().light,
     },
   ],
-] as const)("falls back to OpenCode when configured V2 theme %s is invalid", async (_label, source) => {
+] as const)("falls back to KiduCode when configured V2 theme %s is unavailable", async (_label, source) => {
   let themes: ReturnType<typeof useThemes> | undefined
   let failure: ThemeError | undefined
   let unsubscribe: (() => void) | undefined
@@ -121,10 +91,8 @@ test.each([
 
   try {
     await wait(() => themes?.ready === true)
-    expect(themes?.selected).toBe("opencode")
-    expect(failure?.name).toBe("invalid")
-    expect(failure?.error).toBeInstanceOf(Error)
-    expect(failure?.error.message.length).toBeGreaterThan(0)
+    expect(themes?.selected).toBe("mint-kiducode")
+    expect(failure).toBeUndefined()
   } finally {
     unsubscribe?.()
     app.renderer.destroy()

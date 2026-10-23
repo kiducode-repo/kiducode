@@ -9,7 +9,6 @@ import {
 } from "@opencode/theme/tui"
 import {
   allThemes,
-  getOpenCode2Theme,
   hasTheme,
   parseTheme,
   setCustomThemes,
@@ -23,7 +22,7 @@ import { createComponentTheme, type ComponentTheme } from "../theme/component"
 import { createEffect, createMemo, createSignal, onCleanup, onMount, type Accessor, type ParentProps } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import { createSimpleContext } from "./helper"
-import { useConfig, useNewDesigns } from "../config"
+import { useConfig } from "../config"
 import { useStorageOptional } from "./storage"
 import { DevTools } from "../devtools"
 import { configDirectories } from "../util/config-directories"
@@ -59,6 +58,11 @@ function createThemeErrors() {
 }
 
 const themeErrors = createThemeErrors()
+
+function normalizeTheme(name: string | undefined) {
+  if (!name || name === "opencode" || name === "opencode2" || name === "system") return "mint-kiducode"
+  return name
+}
 
 export type ThemeSource = Readonly<{
   discover(): Promise<Record<string, unknown>>
@@ -113,7 +117,7 @@ type ThemeContextValue = {
 const [store, setStore] = createStore<State>({
   mode: "dark",
   lock: undefined,
-  active: "opencode",
+  active: "mint-kiducode",
   ready: false,
 })
 const [themeSources, setThemeSources] = createSignal(allThemes())
@@ -125,7 +129,6 @@ const themeContext = createSimpleContext({
   init: (props: { mode: "dark" | "light"; source: ThemeSource }): ThemeContextValue => {
     const renderer = useRenderer()
     const configState = useConfig()
-    const newDesigns = useNewDesigns()
     const config = configState.data
     const themes = props.source
     const cache = useStorageOptional()?.store<{ colors?: TerminalColors }>("system-theme", { initial: {} })
@@ -136,7 +139,7 @@ const themeContext = createSimpleContext({
         const mode = lock ?? renderer.themeMode ?? props.mode
         draft.mode = mode
         draft.lock = lock
-        draft.active = config.theme?.name ?? "opencode"
+        draft.active = normalizeTheme(config.theme?.name)
         draft.ready = false
       }),
     )
@@ -144,7 +147,7 @@ const themeContext = createSimpleContext({
     createEffect(() => {
       const theme = config.theme?.name
       if (!theme) return
-      setStore("active", theme)
+      setStore("active", normalizeTheme(theme))
       if (theme === "system") refreshPalette()
     })
 
@@ -163,7 +166,7 @@ const themeContext = createSimpleContext({
         .then((themes) => {
           setCustomThemes(themes)
         })
-        .catch(() => setStore("active", "opencode"))
+        .catch(() => setStore("active", "mint-kiducode"))
     }
 
     onMount(() => {
@@ -288,23 +291,20 @@ const themeContext = createSimpleContext({
       themeRefreshTimeouts.length = 0
     })
 
-    const available = createMemo(
-      (): Record<string, ThemeDocumentSource> =>
-        newDesigns() ? { opencode2: getOpenCode2Theme(), ...themeSources() } : themeSources(),
-    )
+    const available = createMemo((): Record<string, ThemeDocumentSource> => themeSources())
     const has = (name: string) => Boolean(name) && available()[name] !== undefined
 
     const initStarted = performance.now()
     const selected = createMemo(() => {
       const sources = available()
-      const name = sources[store.active] ? store.active : "opencode"
+      const name = sources[store.active] ? store.active : "mint-kiducode"
       try {
         return loadTheme(sources[name], name, store.mode)
       } catch (error) {
-        if (name === "opencode") throw error
+        if (name === "mint-kiducode") throw error
         themeErrors.emit(name, error)
-        setStore("active", "opencode")
-        return loadTheme(sources.opencode, "opencode", store.mode)
+        setStore("active", "mint-kiducode")
+        return loadTheme(sources["mint-kiducode"], "mint-kiducode", store.mode)
       }
     })
     const modes = () => selected().modes
@@ -322,7 +322,7 @@ const themeContext = createSimpleContext({
       currentTokens: tokens,
       currentSyntax,
       get selected() {
-        return store.active
+        return has(store.active) ? store.active : "mint-kiducode"
       },
       all: available,
       has,

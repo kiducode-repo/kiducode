@@ -6,30 +6,33 @@ import { allThemes, hasTheme, getOpenCodeTheme, parseTheme, resolveTheme } from 
 import { discoverThemes } from "../src/theme/discovery"
 import { configDirectories } from "../src/util/config-directories"
 import { terminalMode } from "../src/theme/system"
-import opencodeSource from "../src/theme/assets/opencode.json" with { type: "json" }
+import kiducodeSource from "../src/theme/assets/mint-kiducode.json" with { type: "json" }
+import opencodeV2Source from "../src/theme/assets/v2/opencode.json" with { type: "json" }
 import type { ThemeV1Json } from "@opencode/theme/tui/v1"
 import { tmpdir } from "./fixture/fixture"
 
-const opencodeV1 = opencodeSource as ThemeV1Json
+const kiducodeV1 = kiducodeSource as ThemeV1Json
 
 test("rejects unrecognized theme structures", () => {
   expect(() => parseTheme({})).toThrow()
   expect(() => parseTheme({ version: 3 })).toThrow("Invalid theme")
 })
 
-test("registers opencode as a native V2 theme", () => {
-  expect(allThemes().opencode).toBe(getOpenCodeTheme())
+test("registers only KiduCode themes", () => {
+  expect(Object.keys(allThemes())).toEqual(["mint-kiducode", "orange-kiducode"])
   expect(parseTheme(getOpenCodeTheme()).base).toBeDefined()
 })
 
-test("keeps the experimental opencode2 theme out of the global theme list", () => {
+test("keeps upstream themes out of the global theme list", () => {
+  expect(allThemes().opencode).toBeUndefined()
   expect(allThemes().opencode2).toBeUndefined()
+  expect(hasTheme("opencode")).toBe(false)
   expect(hasTheme("opencode2")).toBe(false)
 })
 
 test("detects V1 themes from their theme field and caches migrations", () => {
-  const unversioned = structuredClone(opencodeV1)
-  const explicit = { ...structuredClone(opencodeV1), version: 1 }
+  const unversioned = structuredClone(kiducodeV1)
+  const explicit = { ...structuredClone(kiducodeV1), version: 1 }
   const first = parseTheme(unversioned, "unversioned")
   const second = parseTheme(explicit, "explicit")
 
@@ -40,9 +43,10 @@ test("detects V1 themes from their theme field and caches migrations", () => {
 })
 
 test("decodes native V2 themes lazily once", () => {
+  const opencodeV2 = parseTheme(opencodeV2Source)
   const source = {
-    base: getOpenCodeTheme().base,
-    light: { ...getOpenCodeTheme().light, categorical: ["red"] },
+    base: opencodeV2.base,
+    light: { ...opencodeV2.light, categorical: ["red"] },
   } as const
 
   const document = parseTheme(source)
@@ -51,13 +55,11 @@ test("decodes native V2 themes lazily once", () => {
 })
 
 test("rejects invalid V2 themes when parsing", () => {
-  expect(() => parseTheme({ light: { categorical: [] } }, "invalid-v2")).toThrow(
-    "Invalid theme: invalid-v2",
-  )
+  expect(() => parseTheme({ light: { categorical: [] } }, "invalid-v2")).toThrow("Invalid theme: invalid-v2")
 })
 
 test("rejects invalid V1 themes when parsing", () => {
-  const source = structuredClone(opencodeV1)
+  const source = structuredClone(kiducodeV1)
   source.defs = { ...source.defs, one: "two", two: "one" }
   source.theme.primary = "one"
 
@@ -65,8 +67,8 @@ test("rejects invalid V1 themes when parsing", () => {
 })
 
 test("replacement sources receive independent parse caches", () => {
-  const first = structuredClone(opencodeV1)
-  const second = structuredClone(opencodeV1)
+  const first = structuredClone(kiducodeV1)
+  const second = structuredClone(kiducodeV1)
   second.theme.primary = "#123456"
 
   const previous = parseTheme(first)
@@ -77,18 +79,19 @@ test("replacement sources receive independent parse caches", () => {
 
 test("hasTheme checks theme presence", () => {
   expect(hasTheme("missing-theme")).toBe(false)
-  expect(hasTheme("opencode")).toBe(true)
+  expect(hasTheme("mint-kiducode")).toBe(true)
+  expect(hasTheme("orange-kiducode")).toBe(true)
 })
 
 test("resolveTheme rejects circular color refs", () => {
-  const item = structuredClone(opencodeV1)
+  const item = structuredClone(kiducodeV1)
   item.defs = { ...item.defs, one: "two", two: "one" }
   item.theme.primary = "one"
   expect(() => resolveTheme(item, "dark")).toThrow("Circular color reference")
 })
 
 test("resolveTheme preserves full theme numeric color and marker semantics", () => {
-  const item = structuredClone(opencodeV1)
+  const item = structuredClone(kiducodeV1)
   item.theme.primary = 6
   delete item.theme.selectedListItemText
 

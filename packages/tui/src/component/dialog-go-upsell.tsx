@@ -152,7 +152,13 @@ export function DialogGoUpsell(props: {
           />
         </box>
       </Show>
-      <box zIndex={1} paddingLeft={inset()} paddingRight={inset()} paddingBottom={short() ? 0 : 1} gap={short() ? 0 : 1}>
+      <box
+        zIndex={1}
+        paddingLeft={inset()}
+        paddingRight={inset()}
+        paddingBottom={short() ? 0 : 1}
+        gap={short() ? 0 : 1}
+      >
         <box flexDirection="row" justifyContent="space-between" flexShrink={0}>
           <text attributes={TextAttributes.BOLD} fg={theme.text.base} bg={textBg()}>
             Free limit reached
@@ -169,7 +175,7 @@ export function DialogGoUpsell(props: {
                 You've used today's free messages.{props.reset ? ` Resets at ${props.reset}.` : ""}
               </text>
               <text fg={theme.text.muted} bg={textBg()} wrapMode="word">
-                OpenCode Go gives you reliable access to the best open-source models for $10/month.
+                KiduCode Go gives you reliable access to the best open-source models for $10/month.
               </text>
               <Link href={GO_URL} fg={primary()} bg={textBg()} wrapMode="none" />
             </scrollbox>
@@ -180,7 +186,7 @@ export function DialogGoUpsell(props: {
               You've used today's free messages.{props.reset ? ` Resets at ${props.reset}.` : ""}
             </text>
             <text fg={theme.text.muted} bg={textBg()} wrapMode="word">
-              OpenCode Go gives you reliable access to the best open-source models for $10/month.
+              KiduCode Go gives you reliable access to the best open-source models for $10/month.
             </text>
           </box>
           <box ref={setAnchor} height={7} paddingBottom={1} alignItems="center" justifyContent="flex-end">
@@ -221,7 +227,9 @@ function DialogGoUpsellConnect(props: { canContinue?: () => boolean; onSubscribe
   const [attempt, setAttempt] = createSignal<IntegrationAttempt>()
   const integration = createMemo(() => data.location.integration.list(location)?.find((item) => item.id === "opencode"))
   const method = createMemo(() =>
-    integration()?.methods.find((item): item is IntegrationOAuthMethod => item.type === "oauth" && item.id === "device"),
+    integration()?.methods.find(
+      (item): item is IntegrationOAuthMethod => item.type === "oauth" && item.id === "device",
+    ),
   )
 
   let started = false
@@ -272,7 +280,7 @@ function DialogGoUpsellConnect(props: { canContinue?: () => boolean; onSubscribe
     if (closed || dialog.stack.length === 0) return false
     if (!valid()) return null
     if (announce) {
-      toast.show({ variant: "success", message: `Connected ${integration()?.name ?? "OpenCode Console"}` })
+      toast.show({ variant: "success", message: `Connected ${integration()?.name ?? "KiduCode Console"}` })
     }
     finish()
     return true

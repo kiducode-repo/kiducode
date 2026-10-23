@@ -338,7 +338,10 @@ export const OpencodePlugin = define<
         models: offer.models,
         workspace: offer.workspace,
         session: (input) =>
-          send("/live/sessions", { session: { ...input.session, model: input.model }, transport: input.transport }).pipe(
+          send("/live/sessions", {
+            session: { ...input.session, model: input.model },
+            transport: input.transport,
+          }).pipe(
             Effect.flatMap((text) =>
               Schema.decodeUnknownEffect(LiveSession)(text).pipe(
                 Effect.mapError(
@@ -379,7 +382,7 @@ export const OpencodePlugin = define<
 
     yield* ctx.integration.transform((editor) => {
       editor.update("opencode", (integration) => {
-        integration.name = "OpenCode Console"
+        integration.name = "KiduCode Console"
       })
       editor.method.update(oauth(http))
       editor.method.update({ integrationID: "opencode", method: { type: "key", label: "API key (service account)" } })
@@ -475,6 +478,7 @@ export const OpencodePlugin = define<
       if (!item) return
       const hasKey = Boolean(process.env.OPENCODE_API_KEY || snapshot.connection || item.provider.settings?.apiKey)
       providers.update(item.provider.id, (provider) => {
+        provider.name = "KiduCode"
         if (!hasKey && !disableFree) {
           provider.activation = "enabled"
           provider.settings = { ...provider.settings, apiKey: "public" }

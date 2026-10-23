@@ -66,6 +66,8 @@ The original checkout and its uncommitted changes were not modified. At migratio
 - Model/provider identity is omitted from agent system context.
 - `mint-kiducode` and `orange-kiducode` remain available as built-in GUI themes.
 - KiduCode desktop product names, application IDs, artifact names, CLI package coordinates, and deep-link scheme are defined while the legacy `opencode` deep-link scheme remains accepted.
+- The TUI homepage renders a KiduCode wordmark and KiduCode product labels instead of upstream OpenCode branding.
+- Full TUI and GUI theme selectors expose only the original `mint-kiducode` and `orange-kiducode` themes.
 - Previous Git caches were not ported because upstream session affinity and caching supersede them, while the old unbounded caches could become stale.
 
 ## Verification
@@ -91,7 +93,7 @@ The following checks passed during migration:
 
 ## Deferred Work And Known Risks
 
-- Full KiduCode UI copy, logos, localization, and visual polish are intentionally deferred.
+- Remaining desktop/web KiduCode copy, localization, logos, and visual polish are intentionally deferred.
 - The new TUI still needs a selected-file revert dialog wired to the migrated API.
 - Antigravity OAuth and inference require live validation with a disposable account; static checks cannot prove external gateway compatibility.
 - Installer, updater, package publication, and all release workflows need an end-to-end release rehearsal before publishing 2.1.3-based artifacts.
