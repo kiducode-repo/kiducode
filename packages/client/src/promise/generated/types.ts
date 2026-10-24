@@ -5366,6 +5366,116 @@ export type CredentialRemoveInput = { readonly credentialID: { readonly credenti
 
 export type CredentialRemoveOutput = void
 
+export type ServerCloudConsoleHealthOutput = { healthy: true; version: string }
+
+export type ServerCloudConsoleSessionCreateInput = { readonly title?: { readonly title?: string | undefined }["title"] }
+
+export type ServerCloudConsoleSessionCreateOutput = { [x: string]: any }
+
+export type ServerCloudConsoleSessionMessagesInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type ServerCloudConsoleSessionMessagesOutput = Array<{ [x: string]: any }>
+
+export type ServerCloudConsoleSessionMessageInput = {
+  readonly sessionID: { readonly sessionID: string }["sessionID"]
+  readonly parts: {
+    readonly parts: ReadonlyArray<
+      | { readonly type: "text"; readonly text: string }
+      | {
+          readonly type: "file"
+          readonly url: string
+          readonly mime?: string | undefined
+          readonly filename?: string | undefined
+        }
+    >
+    readonly model?:
+      | { readonly providerID: string; readonly modelID: string; readonly variant?: string | undefined }
+      | undefined
+    readonly agent?: string | undefined
+  }["parts"]
+  readonly model?: {
+    readonly parts: ReadonlyArray<
+      | { readonly type: "text"; readonly text: string }
+      | {
+          readonly type: "file"
+          readonly url: string
+          readonly mime?: string | undefined
+          readonly filename?: string | undefined
+        }
+    >
+    readonly model?:
+      | { readonly providerID: string; readonly modelID: string; readonly variant?: string | undefined }
+      | undefined
+    readonly agent?: string | undefined
+  }["model"]
+  readonly agent?: {
+    readonly parts: ReadonlyArray<
+      | { readonly type: "text"; readonly text: string }
+      | {
+          readonly type: "file"
+          readonly url: string
+          readonly mime?: string | undefined
+          readonly filename?: string | undefined
+        }
+    >
+    readonly model?:
+      | { readonly providerID: string; readonly modelID: string; readonly variant?: string | undefined }
+      | undefined
+    readonly agent?: string | undefined
+  }["agent"]
+}
+
+export type ServerCloudConsoleSessionMessageOutput = { [x: string]: any }
+
+export type ServerCloudConsoleSessionStatusOutput = { [x: string]: { [x: string]: any } }
+
+export type ServerCloudConsoleSessionAbortInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type ServerCloudConsoleSessionAbortOutput = boolean
+
+export type ServerCloudConsoleAgentExecuteInput = {
+  readonly sessionID: {
+    readonly sessionID: string
+    readonly message: {
+      readonly parts: ReadonlyArray<
+        | { readonly type: "text"; readonly text: string }
+        | {
+            readonly type: "file"
+            readonly url: string
+            readonly mime?: string | undefined
+            readonly filename?: string | undefined
+          }
+      >
+      readonly model?:
+        | { readonly providerID: string; readonly modelID: string; readonly variant?: string | undefined }
+        | undefined
+      readonly agent?: string | undefined
+    }
+  }["sessionID"]
+  readonly message: {
+    readonly sessionID: string
+    readonly message: {
+      readonly parts: ReadonlyArray<
+        | { readonly type: "text"; readonly text: string }
+        | {
+            readonly type: "file"
+            readonly url: string
+            readonly mime?: string | undefined
+            readonly filename?: string | undefined
+          }
+      >
+      readonly model?:
+        | { readonly providerID: string; readonly modelID: string; readonly variant?: string | undefined }
+        | undefined
+      readonly agent?: string | undefined
+    }
+  }["message"]
+}
+
+export type ServerCloudConsoleAgentExecuteOutput = { [x: string]: any }
+
+export type ServerCloudConsoleEventOutput = any
+
 export type ProjectListInput = { readonly archived?: { readonly archived?: boolean | undefined }["archived"] }
 
 export type ProjectListOutput = Array<Project>

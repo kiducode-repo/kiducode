@@ -286,6 +286,29 @@ const layer = () =>
 
         const id = Shell.ID.ascending()
         const args = ShellSelect.args(invocation.shell, invocation.command)
+        const isolated = process.env.KIDUCODE_ISOLATION_MODE === "docker"
+        const allowed = new Set([
+          "HOME",
+          "LANG",
+          "LC_ALL",
+          "LOGNAME",
+          "NODE_ENV",
+          "PATH",
+          "SHELL",
+          "TERM",
+          "TMPDIR",
+          "USER",
+          "XDG_CACHE_HOME",
+          "XDG_CONFIG_HOME",
+          "XDG_DATA_HOME",
+        ])
+        const filteredEnv = isolated
+          ? Object.fromEntries(Object.entries(invocation.env).filter(([key]) => allowed.has(key)))
+          : invocation.env
+        const executable = isolated ? "setpriv" : invocation.shell
+        const spawnArgs = isolated
+          ? ["--reuid=1000", "--regid=1000", "--clear-groups", invocation.shell, ...args]
+          : args
         const file = path.join(outputDir, `${id}.out`)
 
         const info: Info = {
@@ -308,9 +331,9 @@ const layer = () =>
             Effect.gen(function* () {
               const handle = yield* environment.spawner
                 .spawn(
-                  ChildProcess.make(invocation.shell, args, {
+                  ChildProcess.make(executable, spawnArgs, {
                     cwd: invocation.cwd,
-                    env: invocation.env,
+                    env: filteredEnv,
                     stdin: "ignore",
                     detached: process.platform !== "win32",
                     forceKillAfter: Duration.seconds(3),

@@ -43,6 +43,9 @@ At the earlier feature-grouping level, these represent approximately 36 major fe
 - The TUI homepage uses the KiduCode wordmark and product labels.
 - Theme selectors expose only `mint-kiducode` and `orange-kiducode`; legacy upstream theme names remain hidden compatibility inputs in mini mode.
 - Agent system context does not disclose the underlying model or provider.
+- Legacy Cloud Console runner routes are translated to the current session runtime: health, session creation, messages, synchronous prompts, status, abort, event SSE, and headless agent execution.
+- Cloud runner environment compatibility includes `OPENCODE_AUTH_CONTENT`, pure mode, external-skill suppression, and the legacy `packages/kiducode/src/index.ts` startup path.
+- Docker isolation mode filters model-executed shell environments and invokes commands through `setpriv` as UID/GID 1000.
 
 ## Areas Not Selected
 
@@ -93,7 +96,8 @@ Do not publish a release until all distribution paths are reviewed against KiduC
 - Add a current-TUI selected-file revert dialog using the migrated `files: string[]` API.
 - Live-test Antigravity browser login, headless login, refresh, project discovery, and inference with a disposable account.
 - Verify the public OAuth client credentials are intended for installed-client distribution; rotate them otherwise.
-- Test the Cloud Console runner image against the new CLI without changing Cloud Console source.
+- Test the Cloud Console runner image against the new CLI. The CLI contract is restored, but the Cloud build lock still selects the previous commit until that deployment input is intentionally updated.
+- Confirm the runner container grants the privileges required by `setpriv`, or run the container itself as UID/GID 1000; CLI code cannot override Docker capability policy.
 - Exercise restart recovery, background jobs, MCP, plugin loading, session migration, and database fallback in a realistic project.
 - Build and smoke-test desktop installers on supported operating systems.
 - Rehearse installer, updater, package publication, and release workflows.
@@ -106,6 +110,7 @@ Do not publish a release until all distribution paths are reviewed against KiduC
 - Manglish, identity, selected-file revert, CORS, Antigravity transformation, and desktop packaging tests passed.
 - Windows x64 `kiducode.exe` built and returned its version successfully.
 - Source CLI help identifies KiduCode.
+- Cloud runner compatibility routes pass focused server tests, and the exact legacy startup command returns an unauthenticated `/global/health` response in Docker isolation mode.
 - No unresolved or untracked migration paths remain after staging.
 
 ## Safe Continuation

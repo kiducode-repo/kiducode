@@ -18,6 +18,7 @@ import { ServiceRegistration } from "./services/service-registration"
 import { RemoteTunnel } from "./services/remote-tunnel"
 import { WebUi } from "./services/web-ui"
 import { databasePath } from "./database-path"
+import path from "node:path"
 
 export type Mode = "default" | "service" | "stdio"
 
@@ -81,6 +82,8 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
       if (options.mode === "service" && process.platform === "win32" && RetainedImage.installed(global.home))
         yield* RetainedImage.retain(global.cache, "service")
       const { start } = yield* Effect.promise(() => import("@opencode/server/process"))
+      if (process.env.OPENCODE_AUTH_CONTENT)
+        yield* Effect.promise(() => Bun.write(path.join(global.data, "auth.json"), process.env.OPENCODE_AUTH_CONTENT!))
       const environmentPassword = yield* Env.password
       // Keep the lease credential out of the environment inherited by tools.
       if (options.mode === "stdio") {
@@ -95,7 +98,7 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
             : randomBytes(32).toString("base64url")
       if (!password) return yield* Effect.fail(new Error("Missing server password"))
       const instanceID = randomUUID()
-      const transform = yield* WebUi.handler()
+      const transform = process.env.KIDUCODE_ISOLATION_MODE === "docker" ? undefined : yield* WebUi.handler()
       const remote = { urls: [] as ReadonlyArray<string> }
       const launch = start(
         {
@@ -110,6 +113,7 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
           password,
           pty: { handoff },
           simulation: truthy(process.env.OPENCODE_SIMULATE),
+          externalPlugins: !truthy(process.env.OPENCODE_PURE),
           database: {
             path: databasePath(global.data),
           },
@@ -126,8 +130,10 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
             // .claude is only read for skills, so both flags gate the same roots.
             claude: !(
               truthy(process.env.OPENCODE_DISABLE_CLAUDE_CODE) ||
-              truthy(process.env.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS)
+              truthy(process.env.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS) ||
+              truthy(process.env.OPENCODE_DISABLE_EXTERNAL_SKILLS)
             ),
+            agents: !truthy(process.env.OPENCODE_DISABLE_EXTERNAL_SKILLS),
             file: process.env.OPENCODE_CONFIG,
             content: process.env.OPENCODE_CONFIG_CONTENT,
           },

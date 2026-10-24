@@ -47,6 +47,7 @@ import { formLocationLayer } from "./middleware/form-location"
 import { sessionLocationLayer } from "./middleware/session-location"
 import { ServerInfo } from "./server-info"
 import type { ServerOptions } from "./options"
+import { ConfigPluginSource } from "@opencode/core/config/plugin/source"
 
 const applicationServiceNodes = [
   Global.node,
@@ -124,10 +125,12 @@ function makeRoutes<AuthError, AuthServices>(
       Config.configured({
         project: options.config?.project,
         claude: options.config?.claude,
+        agents: options.config?.agents,
         file: options.config?.file,
         content: options.config?.content,
       }),
     ),
+    ...(options.externalPlugins === false ? [ConfigPluginSource.node.replace(ConfigPluginSource.empty)] : []),
     InstructionDiscovery.node.replace(InstructionDiscovery.configured({ project: options.config?.project })),
     ShellSelect.node.replace(ShellSelect.configured({ gitbash: options.windows?.gitbash })),
     Mcp.node.replace(

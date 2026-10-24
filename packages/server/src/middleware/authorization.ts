@@ -61,6 +61,17 @@ export function authorizedRequest(request: HttpServerRequest.HttpServerRequest, 
   )
 }
 
+export function isCloudConsoleCompatibilityRequest(request: HttpServerRequest.HttpServerRequest) {
+  if (process.env.KIDUCODE_ISOLATION_MODE !== "docker") return false
+  const path = new URL(request.url, "http://localhost").pathname
+  if (request.method === "GET" && (path === "/global/health" || path === "/session/status" || path === "/event"))
+    return true
+  if (request.method === "POST" && (path === "/session" || path === "/agent/execute")) return true
+  if (request.method === "GET" && /^\/session\/ses_[^/]+\/message$/.test(path)) return true
+  if (request.method === "POST" && /^\/session\/ses_[^/]+\/(message|abort)$/.test(path)) return true
+  return false
+}
+
 function authorizedSessionCookie(request: HttpServerRequest.HttpServerRequest, config: ServerAuth.Info) {
   const token = request.cookies[ServerAuth.sessionCookieName(request.headers.host)]
   if (!token) return false
@@ -78,6 +89,7 @@ export const authorizationLayer = Layer.effect(
     return Authorization.of((effect) =>
       Effect.gen(function* () {
         const request = yield* HttpServerRequest.HttpServerRequest
+        if (isCloudConsoleCompatibilityRequest(request)) return yield* effect
         const route = yield* HttpRouter.RouteContext
         // Ticketed PTY connects (browsers cannot set headers on WebSocket upgrades) and pairing links
         // skip credential checks here; their handlers consume and validate the ticket or code. Use the

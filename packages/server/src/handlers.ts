@@ -31,6 +31,7 @@ import { VcsHandler } from "./handlers/vcs"
 import { EventFeed } from "./event-feed"
 import { MigrationHandler } from "./handlers/migration"
 import { ConfigHandler } from "./handlers/config"
+import { CloudConsoleHandler } from "./handlers/cloud-console"
 
 export const handlers = Layer.mergeAll(
   ServerHandler,
@@ -56,7 +57,7 @@ export const handlers = Layer.mergeAll(
   CommandHandler,
   SkillHandler,
   RpcHandler,
-  EventHandler.pipe(Layer.provide(EventFeed.layer)),
+  Layer.merge(EventHandler, CloudConsoleHandler).pipe(Layer.provide(EventFeed.layer)),
   PtyHandler,
   PersistentPtyHandler,
   ShellHandler,

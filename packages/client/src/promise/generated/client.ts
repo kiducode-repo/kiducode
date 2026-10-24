@@ -163,6 +163,19 @@ import type {
   CredentialActivateOutput,
   CredentialRemoveInput,
   CredentialRemoveOutput,
+  ServerCloudConsoleHealthOutput,
+  ServerCloudConsoleSessionCreateInput,
+  ServerCloudConsoleSessionCreateOutput,
+  ServerCloudConsoleSessionMessagesInput,
+  ServerCloudConsoleSessionMessagesOutput,
+  ServerCloudConsoleSessionMessageInput,
+  ServerCloudConsoleSessionMessageOutput,
+  ServerCloudConsoleSessionStatusOutput,
+  ServerCloudConsoleSessionAbortInput,
+  ServerCloudConsoleSessionAbortOutput,
+  ServerCloudConsoleAgentExecuteInput,
+  ServerCloudConsoleAgentExecuteOutput,
+  ServerCloudConsoleEventOutput,
   ProjectListInput,
   ProjectListOutput,
   ProjectUpdateInput,
@@ -1520,6 +1533,85 @@ export function make(options: ClientOptions) {
             declaredStatuses: [400, 401],
             empty: true,
           },
+          requestOptions,
+        ),
+    },
+    "server.cloudConsole": {
+      health: (requestOptions?: RequestOptions) =>
+        request<ServerCloudConsoleHealthOutput>(
+          { method: "GET", path: `/global/health`, successStatus: 200, declaredStatuses: [400, 401], empty: false },
+          requestOptions,
+        ),
+      session: {
+        create: (input?: ServerCloudConsoleSessionCreateInput, requestOptions?: RequestOptions) =>
+          request<ServerCloudConsoleSessionCreateOutput>(
+            {
+              method: "POST",
+              path: `/session`,
+              body: { title: input?.["title"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        messages: (input: ServerCloudConsoleSessionMessagesInput, requestOptions?: RequestOptions) =>
+          request<ServerCloudConsoleSessionMessagesOutput>(
+            {
+              method: "GET",
+              path: `/session/${encodeURIComponent(input.sessionID)}/message`,
+              successStatus: 200,
+              declaredStatuses: [400, 401],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        message: (input: ServerCloudConsoleSessionMessageInput, requestOptions?: RequestOptions) =>
+          request<ServerCloudConsoleSessionMessageOutput>(
+            {
+              method: "POST",
+              path: `/session/${encodeURIComponent(input.sessionID)}/message`,
+              body: { parts: input["parts"], model: input["model"], agent: input["agent"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        status: (requestOptions?: RequestOptions) =>
+          request<ServerCloudConsoleSessionStatusOutput>(
+            { method: "GET", path: `/session/status`, successStatus: 200, declaredStatuses: [400, 401], empty: false },
+            requestOptions,
+          ),
+        abort: (input: ServerCloudConsoleSessionAbortInput, requestOptions?: RequestOptions) =>
+          request<ServerCloudConsoleSessionAbortOutput>(
+            {
+              method: "POST",
+              path: `/session/${encodeURIComponent(input.sessionID)}/abort`,
+              successStatus: 200,
+              declaredStatuses: [400, 401],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      agent: {
+        execute: (input: ServerCloudConsoleAgentExecuteInput, requestOptions?: RequestOptions) =>
+          request<ServerCloudConsoleAgentExecuteOutput>(
+            {
+              method: "POST",
+              path: `/agent/execute`,
+              body: { sessionID: input["sessionID"], message: input["message"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      event: (requestOptions?: RequestOptions): AsyncIterable<ServerCloudConsoleEventOutput> =>
+        sse<ServerCloudConsoleEventOutput>(
+          { method: "GET", path: `/event`, successStatus: 200, declaredStatuses: [400, 401], empty: false },
           requestOptions,
         ),
     },

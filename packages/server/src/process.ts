@@ -14,7 +14,7 @@ import { NetAddress } from "effect/net"
 import { createServer } from "node:http"
 import { ServerAuth } from "./auth"
 import { isAllowedCorsOrigin } from "./cors"
-import { authorizedRequest, unauthorizedResponse } from "./middleware/authorization"
+import { authorizedRequest, isCloudConsoleCompatibilityRequest, unauthorizedResponse } from "./middleware/authorization"
 import { withoutParentSpan } from "./request-tracing"
 import { createRoutes } from "./routes"
 import { ServerInfo } from "./server-info"
@@ -192,6 +192,7 @@ function dispatch(
     if (
       !isPairingConnectURL(url) &&
       (!ready || (!hasPtyConnectTicketURL(url) && !hasPersistentPtyConnectTicketURL(url))) &&
+      !isCloudConsoleCompatibilityRequest(request) &&
       !(yield* authorizedRequest(request, auth))
     )
       return unauthorizedResponse(request)

@@ -1719,6 +1719,93 @@ export interface CredentialApi<E = never> {
   readonly remove: CredentialRemoveOperation<E>
 }
 
+export type ServerCloudConsoleHealthOutput = { readonly healthy: true; readonly version: string }
+export type ServerCloudConsoleHealthOperation<E = never> = () => Effect.Effect<ServerCloudConsoleHealthOutput, E>
+
+export type ServerCloudConsoleSessionCreateInput = { readonly title?: string | undefined }
+export type ServerCloudConsoleSessionCreateOutput = { readonly [x: string]: unknown }
+export type ServerCloudConsoleSessionCreateOperation<E = never> = (
+  input?: ServerCloudConsoleSessionCreateInput,
+) => Effect.Effect<ServerCloudConsoleSessionCreateOutput, E>
+
+export type ServerCloudConsoleSessionMessagesInput = { readonly sessionID: Session.ID }
+export type ServerCloudConsoleSessionMessagesOutput = ReadonlyArray<{ readonly [x: string]: unknown }>
+export type ServerCloudConsoleSessionMessagesOperation<E = never> = (
+  input: ServerCloudConsoleSessionMessagesInput,
+) => Effect.Effect<ServerCloudConsoleSessionMessagesOutput, E>
+
+export type ServerCloudConsoleSessionMessageInput = {
+  readonly sessionID: Session.ID
+  readonly parts: ReadonlyArray<
+    | { readonly type: "text"; readonly text: string }
+    | {
+        readonly type: "file"
+        readonly url: string
+        readonly mime?: string | undefined
+        readonly filename?: string | undefined
+      }
+  >
+  readonly model?:
+    | { readonly providerID: string; readonly modelID: string; readonly variant?: string | undefined }
+    | undefined
+  readonly agent?: string | undefined
+}
+export type ServerCloudConsoleSessionMessageOutput = { readonly [x: string]: unknown }
+export type ServerCloudConsoleSessionMessageOperation<E = never> = (
+  input: ServerCloudConsoleSessionMessageInput,
+) => Effect.Effect<ServerCloudConsoleSessionMessageOutput, E>
+
+export type ServerCloudConsoleSessionStatusOutput = { readonly [x: string]: { readonly [x: string]: unknown } }
+export type ServerCloudConsoleSessionStatusOperation<E = never> = () => Effect.Effect<
+  ServerCloudConsoleSessionStatusOutput,
+  E
+>
+
+export type ServerCloudConsoleSessionAbortInput = { readonly sessionID: Session.ID }
+export type ServerCloudConsoleSessionAbortOutput = boolean
+export type ServerCloudConsoleSessionAbortOperation<E = never> = (
+  input: ServerCloudConsoleSessionAbortInput,
+) => Effect.Effect<ServerCloudConsoleSessionAbortOutput, E>
+
+export type ServerCloudConsoleAgentExecuteInput = {
+  readonly sessionID: Session.ID
+  readonly message: {
+    readonly parts: ReadonlyArray<
+      | { readonly type: "text"; readonly text: string }
+      | {
+          readonly type: "file"
+          readonly url: string
+          readonly mime?: string | undefined
+          readonly filename?: string | undefined
+        }
+    >
+    readonly model?:
+      | { readonly providerID: string; readonly modelID: string; readonly variant?: string | undefined }
+      | undefined
+    readonly agent?: string | undefined
+  }
+}
+export type ServerCloudConsoleAgentExecuteOutput = { readonly [x: string]: unknown }
+export type ServerCloudConsoleAgentExecuteOperation<E = never> = (
+  input: ServerCloudConsoleAgentExecuteInput,
+) => Effect.Effect<ServerCloudConsoleAgentExecuteOutput, E>
+
+export type ServerCloudConsoleEventOutput = unknown
+export type ServerCloudConsoleEventOperation<E = never> = () => Stream.Stream<ServerCloudConsoleEventOutput, E>
+
+export interface ServerCloudConsoleApi<E = never> {
+  readonly health: ServerCloudConsoleHealthOperation<E>
+  readonly session: {
+    readonly create: ServerCloudConsoleSessionCreateOperation<E>
+    readonly messages: ServerCloudConsoleSessionMessagesOperation<E>
+    readonly message: ServerCloudConsoleSessionMessageOperation<E>
+    readonly status: ServerCloudConsoleSessionStatusOperation<E>
+    readonly abort: ServerCloudConsoleSessionAbortOperation<E>
+  }
+  readonly agent: { readonly execute: ServerCloudConsoleAgentExecuteOperation<E> }
+  readonly event: ServerCloudConsoleEventOperation<E>
+}
+
 export type ProjectListInput = { readonly archived?: boolean | undefined }
 export type ProjectListOutput = ReadonlyArray<Project.Info>
 export type ProjectListOperation<E = never> = (input?: ProjectListInput) => Effect.Effect<ProjectListOutput, E>
@@ -2347,6 +2434,7 @@ export interface AppApi<E = never> {
   readonly integration: IntegrationApi<E>
   readonly mcp: McpApi<E>
   readonly credential: CredentialApi<E>
+  readonly "server.cloudConsole": ServerCloudConsoleApi<E>
   readonly project: ProjectApi<E>
   readonly form: FormApi<E>
   readonly permission: PermissionApi<E>

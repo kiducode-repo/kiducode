@@ -70,6 +70,16 @@ The original checkout and its uncommitted changes were not modified. At migratio
 - Full TUI and GUI theme selectors expose only the original `mint-kiducode` and `orange-kiducode` themes.
 - Previous Git caches were not ported because upstream session affinity and caching supersede them, while the old unbounded caches could become stale.
 
+### Cloud Console Runner Compatibility
+
+- Legacy unprefixed runner endpoints are implemented as an adapter over the current event-sourced runtime.
+- Legacy message/model payloads and response envelopes are translated without changing Cloud Console callers.
+- The compatibility SSE route exposes top-level `sessionID` and delta fields plus the historical `properties` object.
+- Docker-mode requests bypass Basic authentication only for the exact legacy runner routes.
+- `OPENCODE_AUTH_CONTENT`, `OPENCODE_PURE`, and external-skill suppression are restored for isolated runners.
+- Model-executed shell commands use a filtered environment and `setpriv` demotion in Docker isolation mode.
+- The old `packages/kiducode/src/index.ts` invocation forwards to the current CLI entrypoint.
+
 ## Verification
 
 The following checks passed during migration:
@@ -90,6 +100,7 @@ The following checks passed during migration:
 - Full `bun run check`: completed with 34/34 typecheck tasks successful and no lint errors. The imported upstream tree reports existing advisory lint warnings.
 - Windows x64 CLI smoke build and execution: the generated `kiducode.exe --version` completed successfully.
 - Source CLI help smoke test: usage, executable name, root description, upgrade, uninstall, and run commands identify KiduCode.
+- Exact legacy Cloud runner startup and unauthenticated `/global/health` smoke test completed successfully in Docker isolation mode.
 
 ## Deferred Work And Known Risks
 
@@ -99,6 +110,7 @@ The following checks passed during migration:
 - Installer, updater, package publication, and all release workflows need an end-to-end release rehearsal before publishing 2.1.3-based artifacts.
 - Legacy desktop data should remain readable before any existing OpenCode storage keys or internal protocol names are renamed.
 - The Cloud Console runner image must be tested against the new CLI artifact before changing its pinned runner revision.
+- Cloud runner source-lock and Docker capability configuration remain deployment-owned; the CLI cannot update those without modifying Cloud Console files.
 
 ## Rollback
 

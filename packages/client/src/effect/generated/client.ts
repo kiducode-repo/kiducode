@@ -169,6 +169,19 @@ import type {
   CredentialActivateOutput,
   CredentialRemoveInput,
   CredentialRemoveOutput,
+  ServerCloudConsoleHealthOutput,
+  ServerCloudConsoleSessionCreateInput,
+  ServerCloudConsoleSessionCreateOutput,
+  ServerCloudConsoleSessionMessagesInput,
+  ServerCloudConsoleSessionMessagesOutput,
+  ServerCloudConsoleSessionMessageInput,
+  ServerCloudConsoleSessionMessageOutput,
+  ServerCloudConsoleSessionStatusOutput,
+  ServerCloudConsoleSessionAbortInput,
+  ServerCloudConsoleSessionAbortOutput,
+  ServerCloudConsoleAgentExecuteInput,
+  ServerCloudConsoleAgentExecuteOutput,
+  ServerCloudConsoleEventOutput,
   ProjectListInput,
   ProjectListOutput,
   ProjectUpdateInput,
@@ -1148,6 +1161,78 @@ const adaptGroupCredential = (raw: RawClient["server.credential"]) => ({
   remove: EndpointCredentialRemove(raw),
 })
 
+const EndpointServerCloudConsoleHealth = (raw: RawClient["server.cloudConsole"]) => () =>
+  preserveEffect<ServerCloudConsoleHealthOutput>()(raw["cloudConsole.health"]({}).pipe(Effect.mapError(mapClientError)))
+
+const EndpointServerCloudConsoleSessionCreate =
+  (raw: RawClient["server.cloudConsole"]) => (input?: ServerCloudConsoleSessionCreateInput) =>
+    preserveEffect<ServerCloudConsoleSessionCreateOutput>()(
+      raw["cloudConsole.session.create"]({ payload: { title: input?.["title"] } }).pipe(
+        Effect.mapError(mapClientError),
+      ),
+    )
+
+const EndpointServerCloudConsoleSessionMessages =
+  (raw: RawClient["server.cloudConsole"]) => (input: ServerCloudConsoleSessionMessagesInput) =>
+    preserveEffect<ServerCloudConsoleSessionMessagesOutput>()(
+      raw["cloudConsole.session.messages"]({ params: { sessionID: input["sessionID"] } }).pipe(
+        Effect.mapError(mapClientError),
+      ),
+    )
+
+const EndpointServerCloudConsoleSessionMessage =
+  (raw: RawClient["server.cloudConsole"]) => (input: ServerCloudConsoleSessionMessageInput) =>
+    preserveEffect<ServerCloudConsoleSessionMessageOutput>()(
+      raw["cloudConsole.session.message"]({
+        params: { sessionID: input["sessionID"] },
+        payload: { parts: input["parts"], model: input["model"], agent: input["agent"] },
+      }).pipe(Effect.mapError(mapClientError)),
+    )
+
+const EndpointServerCloudConsoleSessionStatus = (raw: RawClient["server.cloudConsole"]) => () =>
+  preserveEffect<ServerCloudConsoleSessionStatusOutput>()(
+    raw["cloudConsole.session.status"]({}).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointServerCloudConsoleSessionAbort =
+  (raw: RawClient["server.cloudConsole"]) => (input: ServerCloudConsoleSessionAbortInput) =>
+    preserveEffect<ServerCloudConsoleSessionAbortOutput>()(
+      raw["cloudConsole.session.abort"]({ params: { sessionID: input["sessionID"] } }).pipe(
+        Effect.mapError(mapClientError),
+      ),
+    )
+
+const EndpointServerCloudConsoleAgentExecute =
+  (raw: RawClient["server.cloudConsole"]) => (input: ServerCloudConsoleAgentExecuteInput) =>
+    preserveEffect<ServerCloudConsoleAgentExecuteOutput>()(
+      raw["cloudConsole.agent.execute"]({ payload: { sessionID: input["sessionID"], message: input["message"] } }).pipe(
+        Effect.mapError(mapClientError),
+      ),
+    )
+
+const EndpointServerCloudConsoleEvent = (raw: RawClient["server.cloudConsole"]) => () =>
+  preserveStream<ServerCloudConsoleEventOutput>()(
+    Stream.unwrap(
+      raw["cloudConsole.event"]({}).pipe(
+        Effect.mapError(mapClientError),
+        Effect.map((stream) => stream.pipe(Stream.mapError(mapClientError))),
+      ),
+    ),
+  )
+
+const adaptGroupServerCloudConsole = (raw: RawClient["server.cloudConsole"]) => ({
+  health: EndpointServerCloudConsoleHealth(raw),
+  session: {
+    create: EndpointServerCloudConsoleSessionCreate(raw),
+    messages: EndpointServerCloudConsoleSessionMessages(raw),
+    message: EndpointServerCloudConsoleSessionMessage(raw),
+    status: EndpointServerCloudConsoleSessionStatus(raw),
+    abort: EndpointServerCloudConsoleSessionAbort(raw),
+  },
+  agent: { execute: EndpointServerCloudConsoleAgentExecute(raw) },
+  event: EndpointServerCloudConsoleEvent(raw),
+})
+
 const EndpointProjectList = (raw: RawClient["server.project"]) => (input?: ProjectListInput) =>
   preserveEffect<ProjectListOutput>()(
     raw["project.list"]({ query: { archived: input?.["archived"] } }).pipe(Effect.mapError(mapClientError)),
@@ -1681,6 +1766,7 @@ const adaptClient = (raw: RawClient) => ({
   integration: adaptGroupIntegration(raw["server.integration"]),
   mcp: adaptGroupMcp(raw["server.mcp"]),
   credential: adaptGroupCredential(raw["server.credential"]),
+  "server.cloudConsole": adaptGroupServerCloudConsole(raw["server.cloudConsole"]),
   project: adaptGroupProject(raw["server.project"]),
   form: adaptGroupForm(raw["server.form"]),
   permission: adaptGroupPermission(raw["server.permission"]),
