@@ -33,7 +33,7 @@ At the earlier feature-grouping level, these represent approximately 36 major fe
 
 - Manglish prompt preprocessing and metadata.
 - Google Antigravity provider, browser OAuth, headless OAuth, token refresh, project routing, and SSE transformation.
-- Antigravity catalog entries for Gemini 3.8 Flash High/Medium/Low, Claude Sonnet 5.5, Claude Opus 5.5 Thinking, and retained Claude 4.6 models.
+- Antigravity catalog entries for Gemini 3.8 Flash High/Medium/Low, Claude Sonnet 5.5 High, Claude Opus 5.5 High, and retained Claude 4.6 models.
 - File-scoped revert API on top of the current event-sourced snapshot implementation.
 - KiduCode executable and build artifact identity.
 - `KIDUCODE_*` environment compatibility.

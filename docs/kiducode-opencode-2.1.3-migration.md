@@ -50,7 +50,8 @@ The original checkout and its uncommitted changes were not modified. At migratio
 - Browser and headless OAuth methods are registered through the current integration system.
 - OAuth refresh, account-project discovery, model routing, gateway request wrapping, and streaming response unwrapping are ported to the current provider plugin system.
 - Project discovery is cached per access token and failed lookups are evicted.
-- The catalog includes Gemini 3.8 Flash High/Medium/Low, Claude Sonnet 5.5, Claude Opus 5.5 Thinking, and the retained Claude 4.6 models.
+- The catalog includes Gemini 3.8 Flash High/Medium/Low, Claude Sonnet 5.5 High, Claude Opus 5.5 High, and the retained Claude 4.6 models.
+- Antigravity Hub requests use the current Hub metadata/header contract and attach Gemini 3.8 thinking levels without changing account-advertised model IDs.
 - The existing distributed-client OAuth credentials remain in source. They must be reviewed and rotated if they are not intended to be public installed-app credentials.
 
 ### File-Scoped Revert

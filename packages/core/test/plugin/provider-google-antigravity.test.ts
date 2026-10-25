@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test"
-import { antigravityModels, routeModel, unwrapEvent } from "../../src/plugin/provider/google-antigravity"
+import {
+  antigravityModels,
+  prepareRequest,
+  routeModel,
+  unwrapEvent,
+} from "../../src/plugin/provider/google-antigravity"
 
 describe("Google Antigravity provider", () => {
   test.each([
@@ -10,8 +15,8 @@ describe("Google Antigravity provider", () => {
     ["gemini-3.8-flash-high", "gemini-3.8-flash-high"],
     ["gemini-3.8-flash-medium", "gemini-3.8-flash-medium"],
     ["gemini-3.8-flash-low", "gemini-3.8-flash-low"],
-    ["claude-sonnet-5-5", "claude-sonnet-5-5"],
-    ["claude-opus-5-5-thinking", "claude-opus-5-5-thinking"],
+    ["claude-sonnet-5-5-high", "claude-sonnet-5-5-high"],
+    ["claude-opus-5-5-high", "claude-opus-5-5-high"],
     ["deepseek-v4-flash", "deepseek-v4-flash"],
   ])("routes %s to %s", (input, expected) => {
     expect(routeModel(input)).toBe(expected)
@@ -25,10 +30,17 @@ describe("Google Antigravity provider", () => {
         "gemini-3.8-flash-low",
         "claude-sonnet-4-6",
         "claude-opus-4-6-thinking",
-        "claude-sonnet-5-5",
-        "claude-opus-5-5-thinking",
+        "claude-sonnet-5-5-high",
+        "claude-opus-5-5-high",
       ]),
     )
+  })
+
+  test.each(["low", "medium", "high"] as const)("adds Gemini 3.8 %s thinking level", (level) => {
+    expect(prepareRequest({ contents: [] }, `gemini-3.8-flash-${level}`)).toEqual({
+      contents: [],
+      generationConfig: { thinkingConfig: { includeThoughts: true, thinkingLevel: level } },
+    })
   })
 
   test("unwraps gateway SSE responses and supplies the Gemini model role", () => {

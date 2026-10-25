@@ -24,7 +24,8 @@ const scope = [
   "https://www.googleapis.com/auth/experimentsandconfigs",
   "openid",
 ].join(" ")
-const metadata = { ideType: 9, platform: 3, pluginType: 2 }
+const metadata = { ideType: "ANTIGRAVITY" }
+const hubUserAgent = "antigravity/hub/2.24.0 (aidev_client; os_type=windows; arch=x64; cl=1000335682)"
 
 const Token = Schema.Struct({
   access_token: Schema.NonEmptyString,
@@ -56,8 +57,8 @@ export const antigravityModels = [
   { id: "gemini-3.1-pro-high", name: "Gemini 3.1 Pro (High)", input: geminiInput },
   { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", input: claudeInput },
   { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 (Thinking)", input: claudeInput },
-  { id: "claude-sonnet-5-5", name: "Claude Sonnet 5.5", input: claudeInput },
-  { id: "claude-opus-5-5-thinking", name: "Claude Opus 5.5 (Thinking)", input: claudeInput },
+  { id: "claude-sonnet-5-5-high", name: "Claude Sonnet 5.5 (High)", input: claudeInput },
+  { id: "claude-opus-5-5-high", name: "Claude Opus 5.5 (High)", input: claudeInput },
 ] as const
 
 export const GoogleAntigravityPlugin = define({
@@ -112,13 +113,14 @@ export const GoogleAntigravityPlugin = define({
         if (value?.type !== "oauth") return
         const headers = new Headers(event.request.headers)
         headers.set("authorization", `Bearer ${value.access}`)
-        headers.set("user-agent", "antigravity/2.0.0 windows/amd64")
+        headers.set("user-agent", hubUserAgent)
         if (!event.request.url.includes("cloudcode-pa.googleapis.com")) {
           event.request = new Request(event.request, { headers })
           return
         }
-        headers.set("x-goog-api-client", "google-cloud-sdk vscode_cloudshelleditor/0.1")
-        headers.set("client-metadata", JSON.stringify(metadata))
+        headers.delete("x-goog-api-client")
+        headers.delete("client-metadata")
+        headers.delete("x-goog-user-project")
         headers.delete("x-goog-api-key")
         const accountProject = yield* project(value.access, projects)
         const url = new URL(
@@ -129,15 +131,18 @@ export const GoogleAntigravityPlugin = define({
         url.pathname = url.pathname.replace(/\/models\/[^:]+/, "")
         url.searchParams.delete("key")
         const body = yield* Effect.promise(() => event.request.clone().json()).pipe(Effect.orElseSucceed(() => ({})))
+        const request = prepareRequest(body, model)
+        if (url.pathname.includes("streamGenerateContent")) headers.set("accept", "text/event-stream")
         event.request = new Request(url.toString(), {
           method: event.request.method,
           headers,
           body: JSON.stringify({
             project: accountProject,
             model,
-            request: body,
+            request,
             userAgent: "antigravity",
-            requestId: `kiducode-${crypto.randomUUID()}`,
+            requestType: "agent",
+            requestId: `agent-${crypto.randomUUID()}`,
           }),
           signal: event.request.signal,
         })
@@ -310,9 +315,7 @@ function project(access: string, cache: Map<string, Promise<string>>) {
     headers: {
       authorization: `Bearer ${access}`,
       "content-type": "application/json",
-      "user-agent": "antigravity/2.0.0 windows/amd64",
-      "x-goog-api-client": "google-cloud-sdk vscode_cloudshelleditor/0.1",
-      "client-metadata": JSON.stringify(metadata),
+      "user-agent": hubUserAgent,
     },
     body: JSON.stringify({ metadata }),
   })
@@ -340,6 +343,20 @@ export function routeModel(model: string) {
   if (model.includes("gemini-3.6-flash")) return "gemini-3.6-flash-low"
   if (model.includes("gemini-3.7-flash")) return "gemini-3.7-flash-low"
   return model
+}
+
+export function prepareRequest(input: unknown, model: string) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {}
+  const request = structuredClone(input) as Record<string, unknown>
+  if (!model.startsWith("gemini-3.8-flash-")) return request
+  const level = model.endsWith("-high") ? "high" : model.endsWith("-medium") ? "medium" : "low"
+  const generationConfig: Record<string, unknown> =
+    request.generationConfig && typeof request.generationConfig === "object" && !Array.isArray(request.generationConfig)
+      ? { ...request.generationConfig }
+      : {}
+  generationConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: level }
+  request.generationConfig = generationConfig
+  return request
 }
 
 function unwrap(response: Response) {
