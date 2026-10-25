@@ -87,7 +87,7 @@ export function Home() {
         paddingRight={dimensions().width < 44 ? 1 : 2}
       >
         <box flexGrow={1} minHeight={0} />
-        <box height={3} minHeight={0} flexShrink={1} />
+        <box height={4} minHeight={0} flexShrink={1} />
         <box
           flexShrink={0}
           onSizeChange={function () {
@@ -101,6 +101,7 @@ export function Home() {
         <box width="100%" maxWidth={75} zIndex={1000} paddingTop={1} flexShrink={0} position="relative">
           <Prompt ref={bind} placeholders={placeholder} disabled={forms().length > 0} />
         </box>
+        <HomeTip />
         <box flexGrow={1} minHeight={0} />
       </box>
       <box width="100%" flexShrink={0}>
@@ -119,6 +120,33 @@ export function Home() {
         }}
       </Show>
     </>
+  )
+}
+
+const tips = [
+  ["Set ", '"formatter": true', " in config to enable built-in formatters like prettier, gofmt, and ruff"],
+  ["Type ", "@", " followed by a filename to fuzzy search and attach files"],
+  ["Use ", "/undo", " to revert the last message and file changes"],
+  ["Run ", "/connect", " to add an AI provider and start coding"],
+  ["Create ", "kiducode.json", " to configure models, permissions, MCP servers, and tools"],
+] as const
+
+function HomeTip() {
+  const theme = useTheme()
+  const tip = tips[Math.floor(Math.random() * tips.length)] ?? tips[0]
+  return (
+    <box width="100%" maxWidth={75} alignItems="center" paddingTop={3} flexShrink={0}>
+      <box flexDirection="row" maxWidth="100%">
+        <text flexShrink={0} fg={theme.text.feedback.warning.base}>
+          ● Tip{" "}
+        </text>
+        <text flexShrink={1} wrapMode="word" fg={theme.text.muted}>
+          {tip[0]}
+          <span style={{ fg: theme.text.base }}>{tip[1]}</span>
+          {tip[2]}
+        </text>
+      </box>
+    </box>
   )
 }
 

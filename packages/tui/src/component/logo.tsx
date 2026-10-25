@@ -3,7 +3,7 @@ import { For, type JSX } from "solid-js"
 import { useTerminalDimensions } from "@opentui/solid"
 import { useTheme } from "../context/theme"
 import { tint } from "../theme/color"
-import { go, logo } from "../logo"
+import { go, logo, wideLogo } from "../logo"
 
 export function Logo() {
   const theme = useTheme()
@@ -49,9 +49,22 @@ export function Logo() {
     })
   }
 
+  const renderWideLine = (line: string): JSX.Element[] =>
+    Array.from(line).map((char) => (
+      <text
+        fg={char === "█" ? theme.text.base : char === " " ? theme.text.muted : theme.text.action.primary.base}
+        attributes={char === "█" ? TextAttributes.BOLD : undefined}
+        selectable={false}
+      >
+        {char}
+      </text>
+    ))
+
   return (
     <box>
-      {dimensions().height < 12 ? null : dimensions().width < 22 ? (
+      {dimensions().height >= 18 && dimensions().width >= 72 ? (
+        <For each={wideLogo}>{(line) => <box flexDirection="row">{renderWideLine(line)}</box>}</For>
+      ) : dimensions().height < 12 ? null : dimensions().width < 22 ? (
         <For each={go.right.slice(1)}>
           {(line) => <box flexDirection="row">{renderLine(line, theme.text.base, true)}</box>}
         </For>

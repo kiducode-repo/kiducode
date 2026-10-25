@@ -66,7 +66,7 @@ The original checkout and its uncommitted changes were not modified. At migratio
 - Model/provider identity is omitted from agent system context.
 - `mint-kiducode` and `orange-kiducode` remain available as built-in GUI themes.
 - KiduCode desktop product names, application IDs, artifact names, CLI package coordinates, and deep-link scheme are defined while the legacy `opencode` deep-link scheme remains accepted.
-- The TUI homepage renders a KiduCode wordmark and KiduCode product labels instead of upstream OpenCode branding.
+- The TUI homepage restores the original six-row KiduCode ASCII wordmark, theme-colored outline, wide-screen spacing, highlighted Tip row, and KiduCode product labels.
 - Full TUI and GUI theme selectors expose only the original `mint-kiducode` and `orange-kiducode` themes.
 - Previous Git caches were not ported because upstream session affinity and caching supersede them, while the old unbounded caches could become stale.
 
