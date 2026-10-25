@@ -52,7 +52,7 @@ export function Logo() {
   const renderWideLine = (line: string): JSX.Element[] =>
     Array.from(line).map((char) => (
       <text
-        fg={char === "█" ? theme.text.base : char === " " ? theme.text.muted : theme.text.action.primary.base}
+        fg={char === "█" ? theme.text.base : char === " " ? theme.text.muted : theme.text.action.primary.selected}
         attributes={char === "█" ? TextAttributes.BOLD : undefined}
         selectable={false}
       >
