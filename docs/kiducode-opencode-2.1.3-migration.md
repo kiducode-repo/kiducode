@@ -52,6 +52,7 @@ The original checkout and its uncommitted changes were not modified. At migratio
 - Project discovery is cached per access token and failed lookups are evicted.
 - The catalog includes Gemini 3.8 Flash High/Medium/Low, Claude Sonnet 5.5 High, Claude Opus 5.5 High, and the retained Claude 4.6 models.
 - Antigravity Hub requests use the current Hub metadata/header contract and attach Gemini 3.8 thinking levels without changing account-advertised model IDs.
+- Selectable Antigravity models are loaded from the connected account's `fetchAvailableModels` response and refreshed after credential switches; unavailable static models are not shown.
 - The existing distributed-client OAuth credentials remain in source. They must be reviewed and rotated if they are not intended to be public installed-app credentials.
 
 ### File-Scoped Revert

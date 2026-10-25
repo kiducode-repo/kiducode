@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   antigravityModels,
+  accountModels,
   prepareRequest,
   routeModel,
   unwrapEvent,
@@ -41,6 +42,20 @@ describe("Google Antigravity provider", () => {
       contents: [],
       generationConfig: { thinkingConfig: { includeThoughts: true, thinkingLevel: level } },
     })
+  })
+
+  test("uses only selectable models returned by the connected account", () => {
+    expect(
+      accountModels({
+        models: {
+          "claude-sonnet-4-6": { displayName: "Claude Sonnet 4.6", maxTokens: 200_000 },
+          "gemini-3.8-flash-high": { displayName: "Gemini 3.8 Flash (High)", maxTokens: 1_048_576 },
+          "gemini-3.8-flash-medium": { displayName: "Gemini 3.8 Flash (Medium)" },
+          "internal-completion": { displayName: "Internal" },
+        },
+        agentModelSorts: [{ groups: [{ modelIds: ["claude-sonnet-4-6", "gemini-3.8-flash-high"] }] }],
+      }).map((model) => model.id),
+    ).toEqual(["claude-sonnet-4-6", "gemini-3.8-flash-high"])
   })
 
   test("unwraps gateway SSE responses and supplies the Gemini model role", () => {

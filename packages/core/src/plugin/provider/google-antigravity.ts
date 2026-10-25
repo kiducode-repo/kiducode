@@ -1,11 +1,12 @@
 import { define } from "@opencode/plugin/effect/plugin"
 import { Model } from "@opencode/schema/model"
-import { Clock, Deferred, Effect, Schema } from "effect"
+import { Clock, Deferred, Effect, Schema, Stream } from "effect"
 import type { ServerResponse } from "node:http"
 import { Credential } from "../../credential.js"
 import { Integration } from "../../integration.js"
 import { OauthCallbackPage } from "../../oauth/page.js"
 import { Provider } from "../../provider.js"
+import { Bus } from "../../bus.js"
 
 const providerID = Provider.ID.make("google-antigravity")
 const integrationID = Integration.ID.make(providerID)
@@ -65,6 +66,8 @@ export const GoogleAntigravityPlugin = define({
   id: "kiducode.provider.google-antigravity",
   effect: Effect.fn(function* (ctx) {
     const projects = new Map<string, Promise<string>>()
+    const bus = yield* Bus.Service
+    const catalog = { data: [...antigravityModels] as AntigravityModel[] }
     const refresh = (methodID: Integration.MethodID, value: Credential.OAuth) =>
       exchange({ grant_type: "refresh_token", refresh_token: value.refresh }).pipe(
         Effect.flatMap((token) => credential(methodID, token, value.refresh)),
@@ -84,6 +87,20 @@ export const GoogleAntigravityPlugin = define({
         authorize: () => headlessAuthorization(headlessMethodID),
       })
     })
+    const discover = Effect.fn("GoogleAntigravity.discover")(function* () {
+      const connection = yield* ctx.integration.connection.active(integrationID)
+      const value = connection ? yield* ctx.integration.connection.resolve(connection) : undefined
+      if (value?.type !== "oauth") return [...antigravityModels] as AntigravityModel[]
+      const accountProject = yield* project(value.access, projects)
+      return yield* availableModels(value.access, accountProject)
+    })
+    catalog.data = yield* discover().pipe(
+      Effect.catch((error) =>
+        Effect.logWarning("failed to discover Antigravity account models", { error }).pipe(
+          Effect.as([...antigravityModels] as AntigravityModel[]),
+        ),
+      ),
+    )
     yield* ctx.provider.transform((providers) => {
       providers.add({
         info: {
@@ -96,15 +113,30 @@ export const GoogleAntigravityPlugin = define({
             baseURL: "https://cloudcode-pa.googleapis.com/v1internal",
           },
         },
-        models: antigravityModels.map((model) => ({
+        models: catalog.data.map((model) => ({
           ...Model.Info.default(providerID, Model.ID.make(model.id)),
           name: model.name,
           package: "@opencode/ai/providers/google",
           capabilities: { tools: true, input: [...model.input], output: ["text"] },
-          limit: { context: 128_000, input: 128_000, output: 4_096 },
+          limit: {
+            context: model.context ?? 128_000,
+            input: model.context ?? 128_000,
+            output: model.output ?? 4_096,
+          },
         })),
       })
     })
+    yield* bus.subscribe(Credential.Event.Switched).pipe(
+      Stream.filter((event) => event.data.integrationID === integrationID),
+      Stream.runForEach(() =>
+        discover().pipe(
+          Effect.tap((models) => Effect.sync(() => (catalog.data = models))),
+          Effect.andThen(ctx.provider.reload()),
+          Effect.catch((error) => Effect.logWarning("failed to refresh Antigravity account models", { error })),
+        ),
+      ),
+      Effect.forkScoped({ startImmediately: true }),
+    )
     yield* ctx.session.hook(
       "http.request",
       Effect.fn(function* (event) {
@@ -159,6 +191,82 @@ export const GoogleAntigravityPlugin = define({
     )
   }),
 })
+
+type AntigravityModel = {
+  readonly id: string
+  readonly name: string
+  readonly input: readonly string[]
+  readonly context?: number
+  readonly output?: number
+}
+
+type AvailableModel = {
+  readonly displayName?: string
+  readonly modelName?: string
+  readonly maxTokens?: number
+  readonly maxOutputTokens?: number
+  readonly supportsImages?: boolean
+  readonly disabled?: boolean
+  readonly selectable?: boolean
+}
+
+type AvailableModelsResponse = {
+  readonly models?: Readonly<Record<string, AvailableModel>>
+  readonly agentModelSorts?: ReadonlyArray<{
+    readonly groups?: ReadonlyArray<{ readonly modelIds?: readonly string[] }>
+  }>
+  readonly tieredModelIds?: Readonly<Record<string, readonly string[]>>
+}
+
+export function accountModels(response: AvailableModelsResponse): AntigravityModel[] {
+  const visible = (response.agentModelSorts ?? []).flatMap((sort) =>
+    (sort.groups ?? []).flatMap((group) => group.modelIds ?? []),
+  )
+  const selectable = visible.length
+    ? new Set([...visible, ...Object.values(response.tieredModelIds ?? {}).flat()])
+    : undefined
+  return Object.entries(response.models ?? {}).flatMap(([id, model]) => {
+    if (!/^(gemini-|claude-|gpt-oss-)/.test(id)) return []
+    if (/image|imagen|-(disabled|tiered)$/.test(id) || model.disabled || model.selectable === false) return []
+    if (selectable && !selectable.has(id)) return []
+    return [
+      {
+        id,
+        name: model.displayName ?? model.modelName ?? id,
+        input: model.supportsImages === false ? ["text"] : ["text", "image", "pdf"],
+        context: model.maxTokens,
+        output: model.maxOutputTokens,
+      },
+    ]
+  })
+}
+
+function availableModels(access: string, accountProject: string) {
+  return Effect.tryPromise({
+    try: (signal) =>
+      fetch("https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels", {
+        method: "POST",
+        signal,
+        headers: {
+          authorization: `Bearer ${access}`,
+          "content-type": "application/json",
+          "user-agent": hubUserAgent,
+        },
+        body: JSON.stringify({ project: accountProject }),
+      }),
+    catch: () => new Error("Antigravity model discovery request failed"),
+  }).pipe(
+    Effect.flatMap((response) =>
+      response.ok
+        ? Effect.promise(() => response.json() as Promise<AvailableModelsResponse>)
+        : Effect.fail(new Error(`Antigravity model discovery failed (${response.status})`)),
+    ),
+    Effect.map(accountModels),
+    Effect.flatMap((models) =>
+      models.length ? Effect.succeed(models) : Effect.fail(new Error("Antigravity returned no selectable models")),
+    ),
+  )
+}
 
 function browserAuthorization(methodID: Integration.MethodID) {
   return Effect.gen(function* () {
