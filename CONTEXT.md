@@ -42,6 +42,7 @@ At the earlier feature-grouping level, these represent approximately 36 major fe
 - KiduCode XDG paths and database names with legacy OpenCode database fallback.
 - KiduCode desktop identity, CORS origins, deep-link support, and built-in themes.
 - The TUI homepage uses the original six-row KiduCode ASCII wordmark on wide terminals, responsive compact fallbacks, original-style spacing, and the highlighted Tip row.
+- OAuth callback success/error pages embed the canonical `kiducode.png` wordmark and use KiduCode product copy.
 - Theme selectors expose only `mint-kiducode` and `orange-kiducode`; legacy upstream theme names remain hidden compatibility inputs in mini mode.
 - Agent system context does not disclose the underlying model or provider.
 - Legacy Cloud Console runner routes are translated to the current session runtime: health, session creation, messages, synchronous prompts, status, abort, event SSE, and headless agent execution.
