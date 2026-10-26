@@ -42,18 +42,6 @@ export const antigravityModels = [
   { id: "gemini-3.8-flash-high", name: "Gemini 3.8 Flash (High)", input: geminiInput },
   { id: "gemini-3.8-flash-medium", name: "Gemini 3.8 Flash (Medium)", input: geminiInput },
   { id: "gemini-3.8-flash-low", name: "Gemini 3.8 Flash (Low)", input: geminiInput },
-  { id: "gemini-3.7-flash-medium", name: "Gemini 3.7 Flash (Medium)", input: geminiInput },
-  { id: "gemini-3.7-flash-high", name: "Gemini 3.7 Flash (High)", input: geminiInput },
-  { id: "gemini-3.7-flash-low", name: "Gemini 3.7 Flash (Low)", input: geminiInput },
-  { id: "gemini-3.7-flash-tiered", name: "Gemini 3.7 Flash (Tiered)", input: geminiInput },
-  { id: "gemini-3.6-flash-medium", name: "Gemini 3.6 Flash (Medium)", input: geminiInput },
-  { id: "gemini-3.6-flash-high", name: "Gemini 3.6 Flash (High)", input: geminiInput },
-  { id: "gemini-3.6-flash-low", name: "Gemini 3.6 Flash (Low)", input: geminiInput },
-  { id: "gemini-3.6-flash-tiered", name: "Gemini 3.6 Flash (Tiered)", input: geminiInput },
-  { id: "gemini-3.5-flash-extra-low", name: "Gemini 3.5 Flash (Extra Low)", input: geminiInput },
-  { id: "gemini-3.5-flash-medium", name: "Gemini 3.5 Flash (Medium)", input: geminiInput },
-  { id: "gemini-3.5-flash-high", name: "Gemini 3.5 Flash (High)", input: geminiInput },
-  { id: "gemini-3.5-flash-low", name: "Gemini 3.5 Flash (Low)", input: geminiInput },
   { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro (Low)", input: geminiInput },
   { id: "gemini-3.1-pro-high", name: "Gemini 3.1 Pro (High)", input: geminiInput },
   { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", input: claudeInput },
@@ -455,9 +443,6 @@ function project(access: string, cache: Map<string, Promise<string>>) {
 
 export function routeModel(model: string) {
   if (model.includes("gemini-3.1-pro")) return "gemini-3.1-pro-low"
-  if (model.includes("gemini-3.5-flash")) return "gemini-3.5-flash-low"
-  if (model.includes("gemini-3.6-flash")) return "gemini-3.6-flash-low"
-  if (model.includes("gemini-3.7-flash")) return "gemini-3.7-flash-low"
   return model
 }
 

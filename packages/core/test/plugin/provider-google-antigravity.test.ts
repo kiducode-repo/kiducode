@@ -10,9 +10,6 @@ import {
 describe("Google Antigravity provider", () => {
   test.each([
     ["gemini-3.1-pro-high", "gemini-3.1-pro-low"],
-    ["gemini-3.5-flash-extra-low", "gemini-3.5-flash-low"],
-    ["gemini-3.6-flash-tiered", "gemini-3.6-flash-low"],
-    ["gemini-3.7-flash-medium", "gemini-3.7-flash-low"],
     ["gemini-3.8-flash-high", "gemini-3.8-flash-high"],
     ["gemini-3.8-flash-medium", "gemini-3.8-flash-medium"],
     ["gemini-3.8-flash-low", "gemini-3.8-flash-low"],
@@ -24,17 +21,17 @@ describe("Google Antigravity provider", () => {
   })
 
   test("publishes the current Gemini and Claude Antigravity catalog", () => {
-    expect(antigravityModels.map((model) => model.id)).toEqual(
-      expect.arrayContaining([
-        "gemini-3.8-flash-high",
-        "gemini-3.8-flash-medium",
-        "gemini-3.8-flash-low",
-        "claude-sonnet-4-6",
-        "claude-opus-4-6-thinking",
-        "claude-sonnet-5-5-high",
-        "claude-opus-5-5-high",
-      ]),
-    )
+    expect(antigravityModels.map((model) => model.id)).toEqual([
+      "gemini-3.8-flash-high",
+      "gemini-3.8-flash-medium",
+      "gemini-3.8-flash-low",
+      "gemini-3.1-pro-low",
+      "gemini-3.1-pro-high",
+      "claude-sonnet-4-6",
+      "claude-opus-4-6-thinking",
+      "claude-sonnet-5-5-high",
+      "claude-opus-5-5-high",
+    ])
   })
 
   test.each(["low", "medium", "high"] as const)("adds Gemini 3.8 %s thinking level", (level) => {
