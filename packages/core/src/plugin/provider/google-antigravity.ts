@@ -61,6 +61,9 @@ export const antigravityModels = [
   { id: "claude-sonnet-5-5-high", name: "Claude Sonnet 5.5 (High)", input: claudeInput },
   { id: "claude-opus-5-5-high", name: "Claude Opus 5.5 (High)", input: claudeInput },
 ] as const
+const stableModels = antigravityModels.filter((model) =>
+  ["claude-sonnet-4-6", "claude-opus-4-6-thinking"].includes(model.id),
+)
 
 export const GoogleAntigravityPlugin = define({
   id: "kiducode.provider.google-antigravity",
@@ -97,7 +100,7 @@ export const GoogleAntigravityPlugin = define({
     catalog.data = yield* discover().pipe(
       Effect.catch((error) =>
         Effect.logWarning("failed to discover Antigravity account models", { error }).pipe(
-          Effect.as([...antigravityModels] as AntigravityModel[]),
+          Effect.as([...stableModels] as AntigravityModel[]),
         ),
       ),
     )
@@ -132,7 +135,12 @@ export const GoogleAntigravityPlugin = define({
         discover().pipe(
           Effect.tap((models) => Effect.sync(() => (catalog.data = models))),
           Effect.andThen(ctx.provider.reload()),
-          Effect.catch((error) => Effect.logWarning("failed to refresh Antigravity account models", { error })),
+          Effect.catch((error) =>
+            Effect.sync(() => (catalog.data = [...stableModels])).pipe(
+              Effect.andThen(ctx.provider.reload()),
+              Effect.andThen(Effect.logWarning("failed to refresh Antigravity account models", { error })),
+            ),
+          ),
         ),
       ),
       Effect.forkScoped({ startImmediately: true }),
