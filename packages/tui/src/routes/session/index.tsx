@@ -23,6 +23,9 @@ import { useTuiTerminalEnvironment } from "../../context/runtime"
 import { Spinner, SPINNER_FRAMES } from "../../component/spinner"
 import { PatchDiff } from "../../component/patch-diff"
 import { NexusProgress } from "../../component/nexus-progress"
+import { NexusWorkspace } from "../../component/nexus-workspace"
+import { KiduNexus } from "@opencode/schema/kidunexus"
+import { Option, Schema } from "effect"
 import { useTheme, useThemes } from "../../context/theme"
 import {
   BoxRenderable,
@@ -81,7 +84,7 @@ import { useToast } from "../../ui/toast"
 import stripAnsi from "strip-ansi"
 import { usePromptRef } from "../../context/prompt"
 import { projectedPromptInput } from "../../prompt/codec"
-import { appendPrompt } from "../../prompt/history"
+import { appendPrompt, emptyPrompt } from "../../prompt/history"
 import { deduplicateVisibleImages } from "../../prompt/attachment"
 import { useEpilogue } from "../../context/epilogue"
 import { normalizePath } from "../../util/path"
@@ -175,6 +178,23 @@ export function Session(props: {
   const promptRef = usePromptRef()
   const session = createMemo(() => data.session.get(route.sessionID))
   const messages = () => data.session.message.list(route.sessionID)
+  const [nexusVisible, setNexusVisible] = createSignal(true)
+  const [judgeRequest, setJudgeRequest] = createSignal(0)
+  const nexusProgress = createMemo(() =>
+    messages()
+      .flatMap((message) =>
+        message.type === "assistant"
+          ? message.content.flatMap((part) => {
+              if (part.type !== "tool" || !["nexus_run", "nexus_judge", "nexus_report"].includes(part.name)) return []
+              const progress = Option.getOrUndefined(
+                Schema.decodeUnknownOption(KiduNexus.Progress)(toolDisplayMetadata(part.state).nexus),
+              )
+              return progress ? [progress] : []
+            })
+          : [],
+      )
+      .at(-1),
+  )
   const messageIndexes = createMemo(() => new Map(messages().map((message, index) => [message.id, index])))
   const legacy = createMemo(() => legacyTurns(messages()))
   const messagesBeforeRevert = () => {
@@ -1031,6 +1051,23 @@ export function Session(props: {
 
   const baseCommands = createMemo(() => [
     {
+      title: "Open Nexus judge console",
+      id: "session.nexus.judge",
+      group: "Session",
+      slash: { name: "nexus-judge" },
+      run: () => {
+        setNexusVisible(true)
+        setJudgeRequest((value) => value + 1)
+      },
+    },
+    {
+      title: "Toggle Nexus split view",
+      id: "session.nexus.view",
+      group: "Session",
+      slash: { name: "nexus-view" },
+      run: () => setNexusVisible((value) => !value),
+    },
+    {
       title: "Rename session",
       id: "session.rename",
       group: "Session",
@@ -1518,6 +1555,26 @@ export function Session(props: {
         >
           <Show when={session()}>
             <box flexGrow={1} minHeight={0} position="relative">
+              <Show when={nexusVisible() && nexusProgress()?.interactive && nexusProgress()}>
+                {(progress) => (
+                  <NexusWorkspace
+                    parentID={route.sessionID}
+                    progress={progress()}
+                    width={contentWidth()}
+                    height={Math.max(8, Math.floor(terminalHeight() * 0.55))}
+                    judgeRequest={judgeRequest()}
+                    onJudge={(input) => {
+                      local.agent.set("nexus")
+                      promptRef.current?.set({
+                        ...emptyPrompt(),
+                        text: `Relay my explicit judge action using nexus_judge: ${JSON.stringify(input)}`,
+                      })
+                      promptRef.current?.focus()
+                      promptRef.current?.submit()
+                    }}
+                  />
+                )}
+              </Show>
               <scrollbox
                 ref={(r) => {
                   scroll = r
@@ -2588,7 +2645,7 @@ function ToolPart(props: { part: SessionMessageAssistantTool; images?: boolean }
 
   const content = (
     <Switch>
-      <Match when={props.part.name === "nexus_run"}>
+      <Match when={props.part.name === "nexus_run" || props.part.name === "nexus_judge"}>
         <NexusTool {...toolprops} />
       </Match>
       <Match when={display() === "shell"}>
@@ -2733,13 +2790,22 @@ function NexusTool(props: ToolProps) {
   const running = () => props.part.state.status === "streaming" || props.part.state.status === "running"
   return (
     <>
-      <InlineTool icon="◇" complete={!running()} pending="KiduNexus" part={props.part} running={running()} onClick={() => setExpanded(!expanded())}>
+      <InlineTool
+        icon="◇"
+        complete={!running()}
+        pending="KiduNexus"
+        part={props.part}
+        running={running()}
+        onClick={() => setExpanded(!expanded())}
+      >
         {expanded() ? "Collapse Nexus report" : "Inspect Nexus graph and evidence"}
       </InlineTool>
       <box paddingLeft={3} flexDirection="column">
         <NexusProgress value={props.metadata.nexus} details={expanded()} color={theme.text.base} />
         <Show when={expanded() && props.output}>
-          <text fg={theme.text.muted} wrapMode="word">{props.output}</text>
+          <text fg={theme.text.muted} wrapMode="word">
+            {props.output}
+          </text>
         </Show>
       </box>
     </>

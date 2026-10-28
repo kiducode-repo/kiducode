@@ -85,7 +85,8 @@ import { clickedLink } from "./ui/link"
 import { ThemeErrorToast } from "./component/theme-error-toast"
 import { createThemeSource, ThemeProvider, useTheme, useThemes } from "./context/theme"
 import { Home } from "./routes/home"
-import { PromptHistoryProvider } from "./prompt/history"
+import { PromptHistoryProvider, emptyPrompt } from "./prompt/history"
+import { DialogNexusSetup } from "./component/dialog-nexus-setup"
 import { FrecencyProvider } from "./prompt/frecency"
 import { PromptStashProvider } from "./prompt/stash"
 import { Toast, ToastProvider, useToast } from "./ui/toast"
@@ -740,6 +741,26 @@ function App() {
   const connected = useConnected()
   const appCommands = createMemo(() =>
     [
+      {
+        name: "nexus.setup",
+        title: "Set up Nexus workers",
+        category: "Session",
+        slash: { name: "nexus" },
+        run: () => dialog.replace(() => (
+          <DialogNexusSetup onLaunch={(input) => {
+            local.agent.set("nexus")
+            dialog.clear()
+            promptRef.current?.set({
+              ...emptyPrompt(),
+              text: input.nodes
+                ? `Call nexus_run with this exact setup (request human plan confirmation): ${JSON.stringify({ ...input, mode: input.judge === "human" ? "human_judge" : "collaborative" })}`
+                : `Use nexus_models to propose 2-4 workers, then request plan confirmation with nexus_run. Judge: ${input.judge}. Task: ${input.task}`,
+            })
+            promptRef.current?.focus()
+            promptRef.current?.submit()
+          }} />
+        )),
+      },
       {
         name: COMMAND_PALETTE_COMMAND,
         title: "Show command palette",

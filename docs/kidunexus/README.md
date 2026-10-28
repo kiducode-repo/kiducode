@@ -2,6 +2,8 @@
 
 KiduNexus runs bounded reasoning workflows through native child sessions. Crew remains a separate, prompt-directed mode.
 
+Use `/nexus` inside a session for configurable worker panes and human judging. See the [interactive workflow guide](interactive.md).
+
 ## Enable and run
 
 Add this to your project `kiducode.json` (preserving other settings):
@@ -32,6 +34,7 @@ For editing, additionally set `allow_execution: true` and explicitly request `ex
 | `adversarial` | Independent proposals, exchange, bounded proponent/opponent/judge rounds, synthesis |
 | `research` | Adversarial workflow with an additional research worker |
 | `execute` | Collaborative planning, authorized execution, evaluation |
+| `human_judge` | 2–4 custom reasoning workers, persisted pause, human-confirmed questions/revisions/verdict |
 
 Independent workers receive the decomposer's result, not peer proposals. Later nodes receive structured dependency findings. Verification is a model assessment, not independent proof; unresolved concerns and challenges remain in the report.
 
@@ -63,7 +66,7 @@ The contract is in `packages/schema/src/config/kidunexus.ts`; unsupported option
 - Recorded worker usage is separate from reservations. Coordinator usage is excluded. Unknown model pricing is reported as unknown and prevents requests when an estimated cost ceiling is set.
 - Reports checkpoint into existing KV; child sessions retain their normal histories. Parent-session deletion removes associated reports.
 - Cancellation and deadlines interrupt active workers. A crash may leave a checkpoint marked running; `nexus_report` also exposes whether a workflow is active in the current process.
-- There is no scheduler resume/replay command. Inspect interrupted work and existing file changes before explicitly starting another run.
+- Cleanly paused human-judge runs accept bounded follow-ups through `nexus_judge`. Crash-interrupted execution has no scheduler resume/replay command; inspect existing work before explicitly starting another run.
 - Common secret patterns are redacted from findings. This is not comprehensive secret detection, and ordinary child-session history still persists according to existing Session behavior.
 
 See [implementation status](implementation-report.md) and [benchmark protocol](benchmarks.md).

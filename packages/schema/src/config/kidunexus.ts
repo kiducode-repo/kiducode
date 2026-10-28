@@ -4,10 +4,27 @@ import { Schema } from "effect"
 import { Model } from "../model.js"
 import { optional } from "../schema.js"
 
-export const Mode = Schema.Literals(["adaptive", "standard", "collaborative", "adversarial", "research", "execute"])
+export const Mode = Schema.Literals([
+  "adaptive",
+  "standard",
+  "collaborative",
+  "adversarial",
+  "research",
+  "execute",
+  "human_judge",
+])
 export const Role = Schema.Literals([
-  "orchestrator", "creative", "logical", "research", "skeptic", "proponent", "opponent",
-  "verification", "synthesis", "execution", "evaluation",
+  "orchestrator",
+  "creative",
+  "logical",
+  "research",
+  "skeptic",
+  "proponent",
+  "opponent",
+  "verification",
+  "synthesis",
+  "execution",
+  "evaluation",
 ])
 
 export const Info = Schema.Struct({

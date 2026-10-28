@@ -934,7 +934,7 @@ export type SessionMessageCompactionCompleted = {
 
 export type ConfigKiduNexus = {
   enabled?: boolean
-  mode?: "adaptive" | "standard" | "collaborative" | "adversarial" | "research" | "execute"
+  mode?: "adaptive" | "standard" | "collaborative" | "adversarial" | "research" | "execute" | "human_judge"
   max_concurrent_agents?: number
   max_iterations?: number
   max_debate_rounds?: number

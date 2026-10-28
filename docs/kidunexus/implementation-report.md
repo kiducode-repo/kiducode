@@ -2,6 +2,8 @@
 
 Status: experimental end-to-end increment, 2026-10-28. The complete requested subsystem is not yet implemented.
 
+Interactive extension (2026-10-29): [human judging, custom assignments, and live worker panes](interactive.md) now extend this baseline. The checks below record the original increment; see the interactive guide for the new test coverage.
+
 ## Delivered
 
 - Native Nexus agent and tools using existing Session, model, permission, plugin, KV, and progress infrastructure.
@@ -35,7 +37,7 @@ Interactive TUI smoke testing was unavailable because `termctrl` was not install
 - Hypothesis deduplication is normalized exact text, not semantic clustering. Verification does not mechanically prove claims or guarantee cited sources were checked.
 - Durable approved knowledge and cross-run learning are absent.
 - Benchmark execution and complete reproducible ablation fixtures remain incomplete; no measured quality or efficiency advantage is claimed.
-- The TUI has progress and expandable text graph/report output. Dedicated web/desktop views and per-node pause, resume, reroute, and retry controls are absent.
+- The TUI now also has configurable split panes and human-confirmed questions, revisions, and verdicts. Dedicated web/desktop views and arbitrary per-node pause, resume, reroute, and retry controls remain absent.
 - Redaction and filename read restrictions are limited safeguards, not a comprehensive secret-isolation boundary. Approved shell commands retain ordinary host capabilities.
 
 The next implementation increment should address durable attempt provenance and explicit interrupted-run recovery, then executable benchmark fixtures and independently graded live comparisons.
