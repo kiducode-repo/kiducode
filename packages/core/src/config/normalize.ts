@@ -17,6 +17,7 @@ import { ConfigPolicy } from "@opencode/schema/config/policy"
 import { ConfigProvider } from "@opencode/schema/config/provider"
 import { ConfigReference } from "@opencode/schema/config/reference"
 import { ConfigExperimental } from "@opencode/schema/config/experimental"
+import { ConfigKiduNexus } from "@opencode/schema/config/kidunexus"
 import { Permission } from "@opencode/schema/permission"
 import { ConfigAgentV1 } from "../v1/config/agent.js"
 import { ConfigCommandV1 } from "../v1/config/command.js"
@@ -223,6 +224,15 @@ export function normalize(input: unknown): Result {
     if (value === undefined) return
     overlay(encoded, key, value, [key], diagnostics)
   })
+
+  if (own(input, "kidunexus")) {
+    const nexus = Schema.decodeUnknownOption(ConfigKiduNexus.Info, { onExcessProperty: "error" })(input.kidunexus)
+    if (Option.isNone(nexus)) return {
+      type: "rejected",
+      diagnostics: [...diagnostics, { kind: "invalid", path: ["kidunexus"], message: "Invalid or unsupported KiduNexus configuration" }],
+    }
+    encoded.kidunexus = Schema.encodeSync(ConfigKiduNexus.Info)(nexus.value)
+  }
 
   const instructions = decodeList(input.instructions, Schema.String, ["instructions"], diagnostics, decodeEncoded)
   if (instructions.length || Array.isArray(input.instructions)) encoded.instructions = instructions

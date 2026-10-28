@@ -449,6 +449,15 @@ export function routeModel(model: string) {
 export function prepareRequest(input: unknown, model: string) {
   if (!input || typeof input !== "object" || Array.isArray(input)) return {}
   const request = structuredClone(input) as Record<string, unknown>
+  if (Array.isArray(request.contents) && request.contents.length > 0) {
+    const last = request.contents[request.contents.length - 1]
+    if (last && typeof last === "object" && (last as { role?: string }).role === "model") {
+      ;(request.contents as Array<{ role: string; parts: Array<{ text: string }> }>).push({
+        role: "user",
+        parts: [{ text: "Continue" }],
+      })
+    }
+  }
   if (!model.startsWith("gemini-3.8-flash-")) return request
   const level = model.endsWith("-high") ? "high" : model.endsWith("-medium") ? "medium" : "low"
   const generationConfig: Record<string, unknown> =

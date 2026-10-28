@@ -71,13 +71,18 @@ XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/v2/install | bash
 
 ### Agents
 
-OpenCode includes two built-in agents you can switch between with the `Tab` key.
+KiduCode includes three primary agents you can switch between with `Shift+Tab`.
 
 - **build** - Default, full-access agent for development work
 - **plan** - Read-only agent for analysis and code exploration
   - Denies file edits by default
   - Asks permission before running bash commands
   - Ideal for exploring unfamiliar codebases or planning changes
+- **crew** - Collaborative, cost-aware coordination across agents and models
+  - Handles simple tasks directly and delegates focused work when useful
+  - Chooses worker models using available models and catalog pricing
+  - Supports parallel independent work and focused review
+  - See [Crew mode](docs/crew-mode.md) for behavior and current limits
 
 Also included is a **general** subagent for complex searches and multistep tasks.
 This is used internally and can be invoked using `@general` in messages.

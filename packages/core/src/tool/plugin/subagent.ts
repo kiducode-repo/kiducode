@@ -35,7 +35,7 @@ export const Input = Schema.Struct({
   prompt: Schema.String.annotate({ description: "The task for the subagent to perform" }),
   model: Schema.optionalKey(Schema.String).annotate({
     description:
-      'NEVER set this unless the user explicitly asks for a particular model or variant. The value is written as "providerID/modelID", or "providerID/modelID#variant" to include a variant. Do not guess the ID: look the model up with the models tool, filtering to your own provider first.',
+      'Set this only when the user explicitly requests a model or when the active primary agent is Crew (crew), which authorizes automatic cost-aware model selection. Otherwise omit it. Use "providerID/modelID", or "providerID/modelID#variant". Do not guess the ID: first discover available models and pricing with the models tool.',
   }),
   sessionID: Schema.optionalKey(SessionSchema.ID).annotate({
     description:

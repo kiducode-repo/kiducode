@@ -82,6 +82,7 @@ import { ShellTool } from "../tool/plugin/shell.js"
 import { RemoteSshTool } from "../tool/plugin/remote-ssh.js"
 import { SkillTool } from "../tool/plugin/skill.js"
 import { SubagentTool } from "../tool/plugin/subagent.js"
+import { KiduNexusTool } from "../tool/plugin/kidunexus.js"
 import { TodoTool } from "../tool/plugin/todo.js"
 import { Tool } from "../tool.js"
 import { ToolOutput } from "../tool-output.js"
@@ -249,6 +250,7 @@ const pre = [
   RemoteSshTool.Plugin,
   SkillTool.Plugin,
   SubagentTool.Plugin,
+  KiduNexusTool.Plugin,
   TodoTool.Plugin,
   WebFetchTool.Plugin,
   WebSearchTool.Plugin,
@@ -278,7 +280,7 @@ const post = [
 
 // Repository config must not switch off policy enforcement or the Console connection that delivers
 // organization statements, so plugin remove operations skip these IDs.
-export const guarded: ReadonlySet<string> = new Set([OpencodePlugin.id, ConfigPolicyPlugin.Plugin.id])
+export const guarded: ReadonlySet<string> = new Set([OpencodePlugin.id, ConfigPolicyPlugin.Plugin.id, KiduNexusTool.Plugin.id])
 
 export const list = Effect.fn("PluginInternal.list")(function* () {
   // Capture only services; activation supplies the child Scope and batching context.

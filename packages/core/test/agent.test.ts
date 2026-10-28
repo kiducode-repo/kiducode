@@ -180,6 +180,7 @@ describe("Agent", () => {
       expect(agents.map((item) => String(item.id)).sort()).toEqual([
         "build",
         "compaction",
+        "crew",
         "explore",
         "general",
         "summary",
@@ -235,6 +236,27 @@ describe("Agent", () => {
           expect(Permission.evaluate("subagent", "*", info.permissions).effect).toBe("deny")
         }),
       )
+    }),
+  )
+
+  it.effect("exposes Crew as a selectable coordinator with ordinary build permissions", () =>
+    Effect.gen(function* () {
+      const agents = yield* Agent.Service
+      yield* AgentPlugin.Plugin.effect(host({ agent: agentHost(agents) }))
+
+      const crew = yield* agents.get(Agent.ID.make("crew"))
+      const build = yield* agents.get(Agent.defaultID)
+      expect(crew).toMatchObject({ name: "Crew", mode: "primary", hidden: false })
+      expect(crew?.model).toBeUndefined()
+      expect(crew?.permissions).toEqual(build?.permissions)
+      expect(Permission.evaluate("subagent", "general", crew?.permissions ?? []).effect).toBe("allow")
+      expect(Permission.evaluate("read", ".env", crew?.permissions ?? []).effect).toBe("ask")
+
+      yield* agents.transform((editor) => editor.default(Agent.ID.make("crew")))
+      expect((yield* agents.select()).id).toBe(Agent.ID.make("crew"))
+      expect((yield* agents.list())[0]?.id).toBe(Agent.ID.make("crew"))
+      yield* agents.reload()
+      expect((yield* agents.select()).id).toBe(Agent.ID.make("crew"))
     }),
   )
 })

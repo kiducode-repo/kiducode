@@ -22,6 +22,7 @@ import { SplitBorder } from "../../ui/border"
 import { useTuiTerminalEnvironment } from "../../context/runtime"
 import { Spinner, SPINNER_FRAMES } from "../../component/spinner"
 import { PatchDiff } from "../../component/patch-diff"
+import { NexusProgress } from "../../component/nexus-progress"
 import { useTheme, useThemes } from "../../context/theme"
 import {
   BoxRenderable,
@@ -2587,6 +2588,9 @@ function ToolPart(props: { part: SessionMessageAssistantTool; images?: boolean }
 
   const content = (
     <Switch>
+      <Match when={props.part.name === "nexus_run"}>
+        <NexusTool {...toolprops} />
+      </Match>
       <Match when={display() === "shell"}>
         <Shell {...toolprops} />
       </Match>
@@ -2722,6 +2726,24 @@ type ToolProps = {
   tool: string
   output?: string
   part: SessionMessageAssistantTool
+}
+function NexusTool(props: ToolProps) {
+  const theme = useTheme()
+  const [expanded, setExpanded] = createSignal(false)
+  const running = () => props.part.state.status === "streaming" || props.part.state.status === "running"
+  return (
+    <>
+      <InlineTool icon="◇" complete={!running()} pending="KiduNexus" part={props.part} running={running()} onClick={() => setExpanded(!expanded())}>
+        {expanded() ? "Collapse Nexus report" : "Inspect Nexus graph and evidence"}
+      </InlineTool>
+      <box paddingLeft={3} flexDirection="column">
+        <NexusProgress value={props.metadata.nexus} details={expanded()} color={theme.text.base} />
+        <Show when={expanded() && props.output}>
+          <text fg={theme.text.muted} wrapMode="word">{props.output}</text>
+        </Show>
+      </box>
+    </>
+  )
 }
 function GenericTool(props: ToolProps) {
   const theme = useTheme()

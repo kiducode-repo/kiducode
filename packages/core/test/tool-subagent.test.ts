@@ -18,6 +18,7 @@ import { Model } from "@opencode/core/model"
 import { Provider } from "@opencode/core/provider"
 import { AbsolutePath } from "@opencode/core/schema"
 import { Agent } from "@opencode/core/agent"
+import { AgentPlugin } from "@opencode/core/plugin/agent"
 import { Job } from "@opencode/core/job"
 import { KV } from "@opencode/core/kv"
 import { LocationServiceMap } from "@opencode/core/location-service-map"
@@ -41,6 +42,7 @@ import { tempGlobalLayer } from "./fixture/global"
 import { offlineModels } from "./fixture/models"
 import { testEffect } from "./lib/effect"
 import { executeTool, registerToolPlugin, toolIdentity } from "./lib/tool"
+import { agentHost, host } from "./plugin/host"
 
 const childText = "child final response"
 const completedOutput = (sessionID: Session.ID) =>
@@ -721,6 +723,57 @@ describe("SubagentTool", () => {
               error: { type: "tool.execution", message },
             })
           }
+        }),
+      ),
+    ),
+  )
+
+  it.live("Crew delegates to different models and preserves its coordinator model", () =>
+    Effect.acquireRelease(
+      Effect.promise(() => tmpdir()),
+      (dir) => Effect.promise(() => dir[Symbol.asyncDispose]()),
+    ).pipe(
+      Effect.flatMap((dir) =>
+        Effect.gen(function* () {
+          const sessions = yield* Session.Service
+          const parent = yield* sessions.create({
+            location: Location.Ref.make({ directory: AbsolutePath.make(dir.path) }),
+            agent: Agent.ID.make("crew"),
+            model: parentModel,
+          })
+          yield* withSubagent(parent.location)
+          const locations = yield* LocationServiceMap.Service
+          const agents = yield* Agent.Service.pipe(Effect.provide(locations.get(parent.location)))
+          yield* AgentPlugin.Plugin.effect(host({ agent: agentHost(agents) }))
+          const registry = yield* Tool.Service.pipe(Effect.provide(locations.get(parent.location)))
+
+          for (const worker of [
+            { input: { agent: "explore", model: "test/override#fast" }, expected: overrideModel },
+            { input: { agent: "general" }, expected: parentModel },
+          ]) {
+            const result = yield* executeTool(registry, {
+              ...toolIdentity,
+              agent: Agent.ID.make("crew"),
+              sessionID: parent.id,
+              call: {
+                type: "tool-call",
+                id: `crew-${worker.input.agent}`,
+                name: SubagentTool.name,
+                input: {
+                  ...worker.input,
+                  description: "Focused crew task",
+                  prompt: "Complete your assigned work and report findings concisely.",
+                },
+              },
+            })
+            expect(result).toMatchObject({ status: "completed" })
+            expect(yield* sessions.get(outputSessionID(result.metadata))).toMatchObject({
+              parentID: parent.id,
+              agent: worker.input.agent,
+              model: worker.expected,
+            })
+          }
+          expect((yield* sessions.get(parent.id)).model).toEqual(parent.model)
         }),
       ),
     ),

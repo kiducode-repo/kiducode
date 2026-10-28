@@ -932,6 +932,36 @@ export type SessionMessageCompactionCompleted = {
   tokens?: TokenUsageInfo
 }
 
+export type ConfigKiduNexus = {
+  enabled?: boolean
+  mode?: "adaptive" | "standard" | "collaborative" | "adversarial" | "research" | "execute"
+  max_concurrent_agents?: number
+  max_iterations?: number
+  max_debate_rounds?: number
+  max_task_duration_seconds?: number
+  max_total_tokens?: number
+  max_estimated_cost_usd?: number
+  max_output_tokens?: number
+  max_worker_steps?: number
+  allow_execution?: boolean
+  cross_pollination?: boolean
+  independent_verification?: boolean
+  role_models?: {
+    orchestrator?: ModelRef
+    creative?: ModelRef
+    logical?: ModelRef
+    research?: ModelRef
+    skeptic?: ModelRef
+    proponent?: ModelRef
+    opponent?: ModelRef
+    verification?: ModelRef
+    synthesis?: ModelRef
+    execution?: ModelRef
+    evaluation?: ModelRef
+  }
+  fallback_models?: Array<ModelRef>
+}
+
 export type ProviderRequest = {
   settings: ProviderSettings
   headers: { [x: string]: string }
@@ -2358,6 +2388,7 @@ export type ConfigEntry =
             effect: "allow" | "deny"
           }>
         }
+        kidunexus?: ConfigKiduNexus
       }
     }
   | { type: "directory"; path: AbsolutePath }
