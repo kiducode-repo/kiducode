@@ -79,6 +79,7 @@ import { QuestionTool } from "../tool/plugin/question.js"
 import { ReadToolFileSystem } from "../tool/read-filesystem.js"
 import { ReadTool } from "../tool/plugin/read.js"
 import { ShellTool } from "../tool/plugin/shell.js"
+import { RemoteSshTool } from "../tool/plugin/remote-ssh.js"
 import { SkillTool } from "../tool/plugin/skill.js"
 import { SubagentTool } from "../tool/plugin/subagent.js"
 import { TodoTool } from "../tool/plugin/todo.js"
@@ -245,6 +246,7 @@ const pre = [
   QuestionTool.Plugin,
   ReadTool.Plugin,
   ShellTool.Plugin,
+  RemoteSshTool.Plugin,
   SkillTool.Plugin,
   SubagentTool.Plugin,
   TodoTool.Plugin,

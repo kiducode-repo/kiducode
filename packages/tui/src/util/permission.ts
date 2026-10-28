@@ -72,6 +72,19 @@ export function permissionPresentation(
     }
   }
 
+  if (action === "remote_ssh") {
+    const server = text(input.server) || resources[0] || "Remote Server"
+    const command = text(input.command)
+    return {
+      icon: ">",
+      title: `Remote SSH: ${server}`,
+      lines: [
+        `Server: ${server}`,
+        ...(command ? [`$ ${command}`] : []),
+      ],
+    }
+  }
+
   if (action === "subagent") {
     const agent = text(input.agent) || "general"
     const description = text(input.description)

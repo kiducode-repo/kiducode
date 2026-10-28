@@ -65,6 +65,7 @@ import { PermissionProvider } from "./context/permission"
 import { DialogModel } from "./component/dialog-model"
 import { useConnected } from "./component/use-connected"
 import { DialogMcp } from "./component/dialog-mcp"
+import { DialogSsh } from "./component/dialog-ssh"
 import { DialogStatus } from "./component/dialog-status"
 import { DialogConfig } from "./component/dialog-config"
 import { DialogDebug } from "./component/dialog-debug"
@@ -949,6 +950,15 @@ function App() {
         slash: { name: "mcps" },
         run: () => {
           dialog.replace(() => <DialogMcp />)
+        },
+      },
+      {
+        name: "ssh.list",
+        title: "SSH servers",
+        category: "Tools",
+        slash: { name: "ssh" },
+        run: () => {
+          dialog.replace(() => <DialogSsh />)
         },
       },
       {

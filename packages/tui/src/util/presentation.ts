@@ -1,10 +1,25 @@
-import { logo } from "../logo"
+import { logo, wideLogo } from "../logo"
 
 const reset = "\x1b[0m"
 const bold = "\x1b[1m"
 const dim = "\x1b[90m"
+const mint = "\x1b[38;2;125;223;138m"
 
 function wordmark(pad = "") {
+  const columns = process.stdout?.columns ?? 80
+  if (columns >= 68) {
+    return wideLogo.map((line) => {
+      const formatted = Array.from(line)
+        .map((char) => {
+          if (char === "█") return `${bold}${char}${reset}`
+          if (char === " ") return " "
+          return `${mint}${char}${reset}`
+        })
+        .join("")
+      return `${pad}${formatted}`
+    })
+  }
+
   const draw = (line: string, fg: string, shadow: string, bg: string) =>
     [...line]
       .map((char) => {

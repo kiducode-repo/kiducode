@@ -57,6 +57,12 @@ describe("ManglishPreprocess", () => {
     expect(genz.changed).toBe(false)
     expect(genz.style).toBe("genz_manglish")
     expect(genz.intent).toBe("unknown")
+
+    const query = ManglishPreprocess.preprocessManglishPrompt("ninaku malayalam ariyo")
+    expect(query.changed).toBe(false)
+    expect(query.style).toBe("plain_manglish")
+    expect(query.intent).toBe("unknown")
+    expect(ManglishPreprocess.formatForAgent(query)).toBe("ninaku malayalam ariyo")
   })
 
   test("formats changed prompts with original and normalized instruction", () => {
