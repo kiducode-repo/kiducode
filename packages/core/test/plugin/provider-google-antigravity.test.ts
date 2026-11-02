@@ -63,6 +63,55 @@ describe("Google Antigravity provider", () => {
     ).toBe(`data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text: "hello" }], role: "model" } }] })}\n\n`)
   })
 
+  test("appends continue or synthesized function responses to trailing model turns", () => {
+    expect(
+      prepareRequest(
+        {
+          contents: [
+            { role: "user", parts: [{ text: "hi" }] },
+            { role: "model", parts: [{ text: "thinking" }] },
+          ],
+        },
+        "gemini-3.8-flash-high",
+      ),
+    ).toMatchObject({
+      contents: [
+        { role: "user", parts: [{ text: "hi" }] },
+        { role: "model", parts: [{ text: "thinking" }] },
+        { role: "user", parts: [{ text: "Continue" }] },
+      ],
+    })
+
+    expect(
+      prepareRequest(
+        {
+          contents: [
+            { role: "user", parts: [{ text: "hi" }] },
+            { role: "model", parts: [{ functionCall: { id: "call_123", name: "nexus_run", args: {} } }] },
+          ],
+        },
+        "gemini-3.8-flash-high",
+      ),
+    ).toMatchObject({
+      contents: [
+        { role: "user", parts: [{ text: "hi" }] },
+        { role: "model", parts: [{ functionCall: { id: "call_123", name: "nexus_run", args: {} } }] },
+        {
+          role: "user",
+          parts: [
+            {
+              functionResponse: {
+                id: "call_123",
+                name: "nexus_run",
+                response: { name: "nexus_run", content: "Tool execution interrupted" },
+              },
+            },
+          ],
+        },
+      ],
+    })
+  })
+
   test("passes through non-envelope SSE events", () => {
     expect(unwrapEvent("event: ping\ndata: [DONE]")).toBe("event: ping\ndata: [DONE]\n\n")
   })

@@ -1,4 +1,4 @@
-import { createEffect, createMemo, on } from "solid-js"
+import { createEffect, createMemo, createSignal, on } from "solid-js"
 import { Option, Schema } from "effect"
 import { KiduNexus } from "@opencode/schema/kidunexus"
 import { TokenUsage } from "@opencode/schema/token-usage"
@@ -27,7 +27,8 @@ export function NexusWorkspace(props: {
   const route = useRoute()
   const dialog = useDialog()
   const toast = useToast()
-  const children = createMemo(() => {
+  const [view, setView] = createSignal<"chat" | "logs">("chat")
+  const history = createMemo(() => {
     const entries = data.session
       .family(props.parentID)
       .flatMap((id) => {
@@ -38,13 +39,16 @@ export function NexusWorkspace(props: {
           : []
       })
       .sort((a, b) => a.session.time.created - b.session.time.created)
-    return Array.from(new Map(entries.map((entry) => [entry.marker.nodeID, entry])).values()).slice(0, 4)
+    return entries
   })
+  const children = createMemo(() =>
+    Array.from(new Map(history().map((entry) => [entry.marker.nodeID, entry])).values()).slice(0, 4),
+  )
   createEffect(
     on(
       [
         () =>
-          children()
+          history()
             .map((entry) => entry.session.id)
             .join(","),
         () => client.connection.status(),
@@ -52,7 +56,7 @@ export function NexusWorkspace(props: {
       () => {
         if (client.connection.status() !== "connected") return
         void Promise.all(
-          children().flatMap((entry) => [
+          history().flatMap((entry) => [
             data.session.sync(entry.session.id),
             data.session.message.sync(entry.session.id),
           ]),
@@ -108,12 +112,21 @@ export function NexusWorkspace(props: {
       />
     ))
   }
+  const toggleView = () => setView(view() === "chat" ? "logs" : "chat")
   const focus = () =>
     dialog.replace(() => (
       <DialogSelect
         title="Human judge console"
-        description="1–4 inspect · Q question · R revise · V verdict · C cancel"
+        description="1–4 inspect · Q question · R revise · V verdict · C cancel · T toggle view"
         options={[
+          {
+            title: view() === "chat" ? "Switch to Agent logs" : "Switch to Chat mode",
+            value: "toggle-view",
+            onSelect: () => {
+              toggleView()
+              dialog.clear()
+            },
+          },
           ...panes().map((pane) => ({
             title: `Inspect ${pane.id}`,
             value: pane.id,
@@ -127,6 +140,15 @@ export function NexusWorkspace(props: {
             .map((value) => ({ title: value, value, onSelect: () => action(value) })),
         ]}
         bindings={[
+          {
+            bind: "t",
+            title: "Toggle Chat / Agent logs",
+            group: "Nexus",
+            run: () => {
+              toggleView()
+              dialog.clear()
+            },
+          },
           ...panes().map((pane, index) => ({
             bind: String(index + 1),
             title: `Inspect ${pane.id}`,
@@ -157,18 +179,29 @@ export function NexusWorkspace(props: {
   )
   return (
     <box flexDirection="column" flexShrink={0}>
+      <box flexDirection="row" flexShrink={0}>
+        <text fg={theme.text.action.secondary.base} onMouseUp={() => setView("chat")}>
+          {view() === "chat" ? "[💬 Chat mode] " : " 💬 Chat mode  "}
+        </text>
+        <text fg={theme.text.action.secondary.base} onMouseUp={() => setView("logs")}>
+          {view() === "logs" ? "[📋 Agent logs]" : " 📋 Agent logs "}
+        </text>
+      </box>
       <NexusSplitGrid
         panes={panes()}
         width={props.width}
         height={props.height}
         color={theme.text.base}
         borderColor={theme.border.base}
+        viewMode={view()}
         onInspect={inspect}
       />
       <NexusJudgeBar
         panes={panes()}
         state={props.progress.state}
         color={theme.text.action.secondary.base}
+        viewMode={view()}
+        onToggleView={toggleView}
         onInspect={inspect}
         onAction={action}
         onFocus={focus}

@@ -452,10 +452,32 @@ export function prepareRequest(input: unknown, model: string) {
   if (Array.isArray(request.contents) && request.contents.length > 0) {
     const last = request.contents[request.contents.length - 1]
     if (last && typeof last === "object" && (last as { role?: string }).role === "model") {
-      ;(request.contents as Array<{ role: string; parts: Array<{ text: string }> }>).push({
-        role: "user",
-        parts: [{ text: "Continue" }],
-      })
+      const parts = Array.isArray((last as { parts?: unknown[] }).parts)
+        ? ((last as { parts: Array<Record<string, unknown>> }).parts)
+        : []
+      const functionCalls = parts.filter((part) => part && typeof part === "object" && "functionCall" in part) as Array<{
+        functionCall: { name: string; id?: string }
+      }>
+      if (functionCalls.length > 0) {
+        ;(request.contents as Array<{ role: string; parts: unknown[] }>).push({
+          role: "user",
+          parts: functionCalls.map((call) => ({
+            functionResponse: {
+              name: call.functionCall.name,
+              ...(call.functionCall.id ? { id: call.functionCall.id } : {}),
+              response: {
+                name: call.functionCall.name,
+                content: "Tool execution interrupted",
+              },
+            },
+          })),
+        })
+      } else {
+        ;(request.contents as Array<{ role: string; parts: Array<{ text: string }> }>).push({
+          role: "user",
+          parts: [{ text: "Continue" }],
+        })
+      }
     }
   }
   if (!model.startsWith("gemini-3.8-flash-")) return request

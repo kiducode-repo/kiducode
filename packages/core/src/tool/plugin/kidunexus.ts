@@ -72,9 +72,11 @@ export const Plugin = define({
         agent.description =
           "KiduNexus: bounded collaborative reasoning, adversarial verification, and authorized execution."
         agent.mode = "primary"
-        agent.steps = 4
+        agent.steps = 8
         agent.system =
           "You are KiduNexus. For a substantive user task call nexus_run with a precise self-contained task and the requested mode. Use adaptive unless requested otherwise. For interactive tasks use nexus_models to discover available models and propose 2-4 nodes with role, model and objective, then call nexus_run with judge human. The human confirms the plan. An awaiting_judge_input result is paused: stop and wait for the user. Use nexus_judge only to relay the user's explicit question, revision, verdict or cancellation with the saved run id; never decide a human verdict yourself. Execution requires mode execute and configured authorization. Present findings and unresolved issues faithfully. Use nexus_report to inspect prior runs. Simple greetings need no workflow. Never report unmeasured savings or hide disagreement."
+        agent.system +=
+          " Prefer the parent-selected model: omit node.model unless the user requests a different model. Model discovery lists availability, not remaining quota. Use independent parallel workers unless the task requires dependencies. When a run fails, explain its reason directly; do not repeatedly inspect the same report or automatically relaunch a quota-blocked model."
       })
       Object.entries(NexusPrompt.roles).forEach(([role]) => {
         const parsed = Schema.decodeUnknownSync(ConfigKiduNexus.Role)(role)
@@ -82,7 +84,7 @@ export const Plugin = define({
           agent.name = Agent.Name.make(`Nexus ${role}`)
           agent.mode = "subagent"
           agent.hidden = true
-          agent.steps = 4
+          agent.steps = 8
           agent.system = NexusPrompt.system(parsed)
           agent.permissions.push({ action: "*", resource: "*", effect: "deny" })
           for (const tool of ["read", "glob", "grep", "webfetch", "websearch", "edit", "shell"]) {
@@ -193,16 +195,24 @@ export const Plugin = define({
             return yield* Effect.die(new Error("Nexus worker is not attached to an active run"))
           return
         }
-        if (++state.steps > state.config.steps) {
-          state.failure = new NexusSchema.Failure({ kind: "limit", message: "Nexus worker step limit reached" })
-          return yield* Effect.die(state.failure)
-        }
         const session = yield* sessions.get(event.sessionID).pipe(Effect.orDie)
         const marker = decodeMarker(session.metadata?.kidunexus)
         if (Option.isNone(marker)) return yield* Effect.die(new Error("Missing Nexus worker identity"))
-        Object.keys(event.tools).forEach((name) => {
-          if (!NexusPolicy.allows(marker.value.role, name)) delete event.tools[name]
-        })
+        if (state.steps >= state.config.steps) {
+          Object.keys(event.tools).forEach((name) => delete event.tools[name])
+          event.system.push({
+            type: "text",
+            text: "\n\nCRITICAL: Maximum tool steps reached. All tools are disabled. You must provide your final public findings JSON envelope now with the evidence and claims you have collected so far.",
+          })
+        } else {
+          Object.keys(event.tools).forEach((name) => {
+            if (!NexusPolicy.allows(marker.value.role, name)) delete event.tools[name]
+          })
+        }
+        if (++state.steps > state.config.steps + 1) {
+          state.failure = new NexusSchema.Failure({ kind: "limit", message: "Nexus worker step limit reached" })
+          return yield* Effect.die(state.failure)
+        }
         const bytes =
           new TextEncoder().encode(
             JSON.stringify({ system: event.system, messages: event.messages, tools: event.tools }),
@@ -368,6 +378,10 @@ export const Plugin = define({
                     runID: previous?.id ?? context.id,
                     nodeID: node.assignment?.id ?? node.id,
                     pane: !!node.assignment,
+                    phase: node.phase,
+                    peers: dependencies
+                      .map((peer) => peer.assignment?.id ?? peer.id)
+                      .filter((id) => id !== node.assignment?.id),
                   },
                 },
                 permissions: [
@@ -403,20 +417,23 @@ export const Plugin = define({
             return yield* Effect.gen(function* () {
               yield* sessions.prompt({
                 sessionID: child.id,
-                text: NexusPrompt.handoff(
-                  JSON.stringify({
-                    task: input.task,
-                    objective: node.assignment?.task,
-                    humanFeedback: feedback?.feedback,
-                  }),
-                  node,
-                  dependencies,
-                ),
+                text: NexusPrompt.handoff(input.task, node, dependencies, node.assignment?.task, feedback?.feedback),
                 resume: false,
               })
-              yield* sessions.resume(child.id)
+              yield* sessions.resume(child.id).pipe(
+                // Context hooks cannot fail with typed errors. Recover only the exact
+                // limit/budget failure raised by this worker's hook; other defects escape.
+                Effect.catchDefect((defect) =>
+                  state.failure && defect === state.failure ? Effect.fail(state.failure) : Effect.die(defect),
+                ),
+              )
               const messages = yield* sessions.messages({ sessionID: child.id, order: "desc", limit: 20 })
-              const assistant = messages.find((message) => message.type === "assistant" && !message.error)
+              const assistant = messages.find((message) => message.type === "assistant")
+              if (assistant?.error)
+                return yield* new NexusSchema.Failure({
+                  kind: "worker",
+                  message: NexusPrompt.redact(`Worker ${node.id} (${node.model}): ${assistant.error.message}`),
+                })
               const decoded = decodeFindings(SubagentCompletion.text(assistant))
               if (Option.isNone(decoded))
                 return yield* new NexusSchema.Failure({
@@ -429,12 +446,14 @@ export const Plugin = define({
               return redacted.value
             }).pipe(
               Effect.mapError(
-                () =>
+                (error) =>
                   state.failure ??
-                  new NexusSchema.Failure({
-                    kind: "worker",
-                    message: `Worker ${node.id} failed; inspect its child session for details`,
-                  }),
+                  (error instanceof NexusSchema.Failure
+                    ? error
+                    : new NexusSchema.Failure({
+                        kind: "worker",
+                        message: NexusPrompt.redact(`Worker ${node.id} (${node.model}): ${error.message}`),
+                      })),
               ),
               Effect.ensuring(
                 Effect.gen(function* () {
@@ -668,6 +687,7 @@ function progress(report: NexusSchema.Report, reservedTokens = report.reservedTo
   return {
     id: report.id,
     state: report.state,
+    ...(report.reason ? { reason: report.reason } : {}),
     phase: report.nodes.findLast((node) => node.status === "running")?.phase ?? report.state,
     completed: report.nodes.filter((node) => node.status === "completed").length,
     total: report.nodes.length,
@@ -681,8 +701,8 @@ function progress(report: NexusSchema.Report, reservedTokens = report.reservedTo
       role: node.role,
       status: node.status,
       dependencies: node.dependencies,
-      sessionID: node.sessionID,
-      model: node.model,
+      ...(node.sessionID ? { sessionID: node.sessionID } : {}),
+      ...(node.model ? { model: node.model } : {}),
     })),
   }
 }

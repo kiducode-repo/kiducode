@@ -39,6 +39,8 @@ export const Worker = Schema.Struct({
   role: Schema.String,
   parentID: Schema.String,
   pane: Schema.Boolean.pipe(optional),
+  phase: Schema.String.pipe(optional),
+  peers: Schema.Array(Schema.String).pipe(optional),
 }).annotate({ identifier: "KiduNexus.Worker" })
 export interface Worker extends Schema.Schema.Type<typeof Worker> {}
 
@@ -46,6 +48,7 @@ export interface Worker extends Schema.Schema.Type<typeof Worker> {}
 export const Progress = Schema.Struct({
   id: Schema.String,
   state: Schema.String,
+  reason: Schema.String.pipe(optional),
   phase: Schema.String,
   completed: Schema.Int,
   total: Schema.Int,

@@ -1,6 +1,6 @@
 import { expect } from "bun:test"
 import { Effect, Layer, Schema, Stream } from "effect"
-import { LanguageModel } from "@opencode/ai"
+import { AIError, LanguageModel, RateLimitError } from "@opencode/ai"
 import { OpenAIChat } from "@opencode/ai/protocols"
 import { TestLLM } from "@opencode/ai/testing"
 import { Agent } from "@opencode/core/agent"
@@ -55,6 +55,135 @@ const it = testEffect(
     ]),
   ),
 )
+
+for (const outcome of ["success", "quota", "steps", "budget"] as const) {
+  it.live(`parent runner settles Nexus tools and preserves progress (${outcome})`, () =>
+    Effect.gen(function* () {
+      const directory = yield* tmpdirScoped()
+      yield* Effect.promise(() =>
+        Bun.write(
+          `${directory.path}/kiducode.json`,
+          JSON.stringify({
+            kidunexus: {
+              enabled: true,
+              max_total_tokens: outcome === "budget" ? 1000 : 2_000_000,
+              max_worker_steps: outcome === "steps" ? 1 : 4,
+            },
+            permissions: [{ action: "*", resource: "*", effect: "allow" }],
+          }),
+        ),
+      )
+      const sessions = yield* Session.Service
+      const locations = yield* LocationServiceMap.Service
+      const llm = yield* TestLLM.Test
+      yield* llm.serve((request) => {
+        if (request.system?.some((part) => part.text.includes("KiduNexus's"))) {
+          if (outcome === "quota")
+            return Stream.fail(
+              new AIError({
+                reason: new RateLimitError({ message: "Free usage limit reached", retryAfterMs: 15000000 }),
+              }),
+            )
+          if (outcome === "steps" && request.system?.some((part) => part.text.includes("KiduNexus's skeptic")))
+            return TestLLM.tool("worker-read", "read", { path: `${directory.path}/kiducode.json` })
+          return TestLLM.text(
+            JSON.stringify({
+              summary: "Public findings",
+              hypotheses: [],
+              evidence: [],
+              challenges: [],
+              verifications: [],
+              unresolved: [],
+            }),
+            "worker",
+          )
+        }
+        const count = request.messages.filter((message) => message.role === "tool").length
+        if (count === 0)
+          return TestLLM.tool("runner-nexus", "nexus_run", {
+            task: "Compare alternatives",
+            mode: "human_judge",
+            nodes: [
+              { id: "proposal", role: "creative" },
+              { id: "review", role: "skeptic", dependencies: ["proposal"] },
+            ],
+          })
+        if (count === 1) return TestLLM.tool("runner-report", "nexus_report", { id: "runner-nexus" })
+        return TestLLM.text("Reported the workflow outcome", "parent")
+      })
+      const parent = yield* sessions.create({
+        location: { directory: AbsolutePath.make(directory.path) },
+        agent: Agent.ID.make("nexus"),
+        model: Model.Ref.make({ id: Model.ID.make("fixture"), providerID: Provider.ID.make("test") }),
+      })
+      yield* Plugin.Service.use((plugins) => plugins.awaitActivation).pipe(
+        Effect.provide(locations.get(parent.location)),
+      )
+      const forms = yield* Form.Service.pipe(Effect.provide(locations.get(parent.location)))
+      const bus = yield* Bus.Service
+      yield* bus.subscribe(Form.Event.Created).pipe(
+        Stream.runForEach((event) =>
+          forms.reply({ id: event.data.form.id, answer: { confirm: "confirm" } }).pipe(Effect.orDie),
+        ),
+        Effect.forkScoped({ startImmediately: true }),
+      )
+      yield* Provider.Service.use((providers) =>
+        providers.transform((editor) => {
+          editor.models.update(Provider.ID.make("test"), Model.ID.make("fixture"), () => {})
+        }),
+      ).pipe(Effect.provide(locations.get(parent.location)))
+      yield* sessions.prompt({ sessionID: parent.id, text: "Run Nexus and inspect the result", resume: false })
+      yield* sessions.resume(parent.id)
+      const messages = yield* sessions.messages({ sessionID: parent.id, order: "asc", limit: 20 })
+      const tools = messages.flatMap((message) =>
+        message.type === "assistant" ? message.content.filter((part) => part.type === "tool") : [],
+      )
+      expect(tools).toHaveLength(2)
+      for (const tool of tools) {
+        expect(tool.state.status).toBe("completed")
+        if (tool.state.status === "completed") {
+          const metadata = tool.state.metadata
+          if (!metadata) throw new Error("Nexus tool completed without progress metadata")
+          expect(metadata.nexus).toMatchObject({
+            state:
+              outcome === "steps" || outcome === "budget"
+                ? "limited"
+                : outcome === "quota"
+                  ? "failed"
+                  : "awaiting_judge_input",
+          })
+          expect(() => Schema.encodeSync(Schema.Json)(metadata)).not.toThrow()
+        }
+      }
+      if (outcome === "quota") {
+        const kv = yield* KV.Service
+        expect(yield* kv.get(`kidunexus:${parent.id}:runner-nexus`)).toMatchObject({
+          reason: expect.stringContaining("Free usage limit reached"),
+        })
+      }
+      if (outcome === "steps") {
+        const kv = yield* KV.Service
+        const report = Schema.decodeUnknownSync(NexusSchema.Report)(
+          yield* kv.get(`kidunexus:${parent.id}:runner-nexus`),
+        )
+        expect(report.state).toBe("limited")
+        expect(report.reason).toBe("Nexus worker step limit reached")
+        expect(report.nodes[0]).toMatchObject({ status: "completed", result: { summary: "Public findings" } })
+        expect(report.nodes[1]).toMatchObject({ status: "failed", attempt: 1 })
+        expect(report.nodes.some((node) => node.status === "running")).toBe(false)
+      }
+      if (outcome === "budget") {
+        const kv = yield* KV.Service
+        const report = Schema.decodeUnknownSync(NexusSchema.Report)(
+          yield* kv.get(`kidunexus:${parent.id}:runner-nexus`),
+        )
+        expect(report.state).toBe("limited")
+        expect(report.reason).toContain("budget exhausted")
+        expect(report.nodes.map((node) => node.status)).toEqual(["failed", "skipped"])
+      }
+    }),
+  )
+}
 
 it.live("native Nexus tool runs real child sessions and persists an inspectable report", () =>
   Effect.gen(function* () {
@@ -132,6 +261,7 @@ it.live("native Nexus tool runs real child sessions and persists an inspectable 
     expect(report.tokens).toBeGreaterThan(0)
     expect(report.estimatedCost).toBeNull()
     expect(progress.length).toBeGreaterThan(5)
+    for (const value of progress) expect(() => Schema.encodeSync(Schema.Json)(value)).not.toThrow()
     const kv = yield* KV.Service
     expect(yield* kv.get(`kidunexus:${parent.id}:nexus-integration`)).toMatchObject({ state: "completed" })
     const replay = yield* executeTool(registry, {

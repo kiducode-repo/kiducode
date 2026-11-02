@@ -6,8 +6,10 @@ export function NexusJudgeBar(props: {
   panes: readonly NexusPane[]
   state: string
   color?: RGBA
+  viewMode?: "chat" | "logs"
   onInspect: (pane: NexusPane) => void
   onAction: (action: "question" | "revise" | "verdict" | "cancel") => void
+  onToggleView?: () => void
   onFocus: () => void
 }) {
   return (
@@ -21,6 +23,11 @@ export function NexusJudgeBar(props: {
             <text fg={props.color} onMouseUp={() => props.onInspect(pane)}>{` [${index() + 1}: ${pane.id}] `}</text>
           )}
         </For>
+        <Show when={props.onToggleView}>
+          <text fg={props.color} onMouseUp={props.onToggleView}>
+            {` [view: ${props.viewMode ?? "chat"}] `}
+          </text>
+        </Show>
         <Show when={props.state === "awaiting_judge_input"}>
           <For each={["question", "revise", "verdict", "cancel"] as const}>
             {(action) => <text fg={props.color} onMouseUp={() => props.onAction(action)}>{` [${action}] `}</text>}

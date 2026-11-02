@@ -739,15 +739,13 @@ function App() {
   })
 
   const connected = useConnected()
-  const appCommands = createMemo(() =>
-    [
-      {
-        name: "nexus.setup",
-        title: "Set up Nexus workers",
-        category: "Session",
-        slash: { name: "nexus" },
-        run: () => dialog.replace(() => (
-          <DialogNexusSetup onLaunch={(input) => {
+  function openNexusSetup(direction?: 1 | -1) {
+    const state = { launched: false }
+    dialog.replace(
+      () => (
+        <DialogNexusSetup
+          onLaunch={(input) => {
+            state.launched = true
             local.agent.set("nexus")
             dialog.clear()
             promptRef.current?.set({
@@ -758,8 +756,22 @@ function App() {
             })
             promptRef.current?.focus()
             promptRef.current?.submit()
-          }} />
-        )),
+          }}
+        />
+      ),
+      () => {
+        if (!state.launched && direction && local.agent.current()?.id === "nexus") local.agent.move(direction)
+      },
+    )
+  }
+  const appCommands = createMemo(() =>
+    [
+      {
+        name: "nexus.setup",
+        title: "Set up Nexus workers",
+        category: "Session",
+        slash: { name: "nexus" },
+        run: () => openNexusSetup(),
       },
       {
         name: COMMAND_PALETTE_COMMAND,
@@ -989,6 +1001,7 @@ function App() {
         palette: undefined,
         run: () => {
           local.agent.move(1)
+          if (local.agent.current()?.id === "nexus") openNexusSetup(1)
         },
       },
       {
@@ -1023,6 +1036,7 @@ function App() {
         palette: undefined,
         run: () => {
           local.agent.move(-1)
+          if (local.agent.current()?.id === "nexus") openNexusSetup(-1)
         },
       },
       {

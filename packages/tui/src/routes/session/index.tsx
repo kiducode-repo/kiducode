@@ -2801,7 +2801,13 @@ function NexusTool(props: ToolProps) {
         {expanded() ? "Collapse Nexus report" : "Inspect Nexus graph and evidence"}
       </InlineTool>
       <box paddingLeft={3} flexDirection="column">
-        <NexusProgress value={props.metadata.nexus} details={expanded()} color={theme.text.base} />
+        <NexusProgress
+          value={props.metadata.nexus}
+          details={expanded()}
+          color={theme.text.base}
+          status={props.part.state.status}
+          error={props.part.state.status === "error" ? props.part.state.error.message : undefined}
+        />
         <Show when={expanded() && props.output}>
           <text fg={theme.text.muted} wrapMode="word">
             {props.output}

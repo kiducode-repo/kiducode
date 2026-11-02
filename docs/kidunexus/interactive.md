@@ -4,7 +4,9 @@ Enable `kidunexus.enabled` in the project configuration, select a connected mode
 
 ## Start a run
 
-Run `/nexus` to open setup:
+Cycle into **Nexus** with **Shift+Tab** to open setup directly. Esc cancels setup and continues to the next agent in the cycling direction, preserving your existing prompt. `/nexus` reopens the same dialog; dismissing that shortcut keeps your current agent.
+
+In setup:
 
 1. Choose manual assignments or ask the coordinator to propose a plan.
 2. Choose **Human judge** or **Autonomous synthesis**.
@@ -18,9 +20,27 @@ The agent-driven path uses `nexus_models` to discover available model references
 
 Two workers appear side by side. Three or four workers use two rows, with an empty fourth cell for a three-worker plan. Terminals narrower than 72 content columns stack the panes; short viewports scroll. Each pane has a model label, recorded token count, status, public response stream, and tool activity. Select its header to inspect the native child session.
 
+### Chat Mode vs. Agent Logs
+
+By default, the panes display in **Chat Mode**, rendering worker speech naturally rather than showing raw JSON objects:
+
+- `💬 Position`: the core argument or rebuttal.
+- `📌 Core Arguments`: bulleted claims with sources.
+- `🔍 Evidence Cited`: excerpts and direct source references.
+- `⚔️ Challenges to Peer`: explicit counter-arguments addressing peer claims.
+- `⚖️ Verification` and `❓ Open Questions`: verification checks and remaining uncertainties.
+- During generation, live partial summaries stream as readable text rather than raw JSON syntax.
+
+Click **`[📋 Agent logs]`** (or press **T** in `/nexus-judge`) to switch to **Agent logs**, which displays the raw JSON envelope and raw tool executions (`[tool: ... · completed]`). Click **`[💬 Chat mode]`** to return to the conversational view.
+
+### Peer Communication
+
+Workers talk to each other via explicit graph dependencies. When a worker depends on earlier nodes (e.g. `agent2` opponent depending on `agent1` proponent), `agent1`'s public findings are passed directly into `agent2`'s handoff under `untrusted_peer_findings` alongside peer context instructions to address, challenge, and counter `agent1`'s exact propositions.
+
 `/nexus-view` toggles the grid. `/nexus-judge` opens the judge console. Within that console:
 
 - **1–4:** inspect a worker.
+- **T:** toggle Chat Mode / Agent logs view.
 - **Q:** ask a follow-up question.
 - **R:** request revision.
 - **V:** deliver a final verdict, optionally identifying a winning worker.
@@ -54,6 +74,14 @@ Allowed roles are `creative`, `logical`, `research`, `skeptic`, `proponent`, `op
 
 Follow-ups create fresh child sessions for the selected logical workers and pass their previous findings plus the human feedback. Prior nodes and sessions remain inspectable. The report records the decision history, original policy agent, effective limits, and cumulative reservations. The grid switches each logical worker's pane to its latest child session.
 
+## Troubleshooting failed workers
+
+A provider quota rejection (for example HTTP 429 / free usage limit reached) fails the worker and skips workers that depend on it. The report and progress card retain the provider's error message. Select a model with available quota before starting a new run. Automatic plans prefer the parent-selected model unless you request another model; discovery does not verify remaining provider quota.
+
+Progress metadata omits unavailable worker session/model fields so pending and skipped workers remain JSON-serializable. Regression coverage runs both successful and rate-limited dependent-worker workflows through the parent Session runner, then inspects the persisted tool outcomes and report.
+
+Worker step and reservation-budget limits end the workflow with a saved `limited` report. Completed findings remain inspectable, unfinished nodes stop, and dependent pending nodes are skipped. These expected limits are recovered at the worker-session boundary; unrelated defects and interruptions are not converted into limit reports. Parent-runner regressions cover both limits and subsequent report inspection.
+
 ## Bounds and persistence
 
 - `max_iterations` includes the initial round: the default of 2 permits one follow-up round; the maximum of 3 permits two. Verdict/cancel remain available after this allowance is used.
@@ -69,12 +97,12 @@ Deterministic tests cover custom graph validation, human pause without automatic
 
 Verified on Windows with Bun 1.4.4:
 
-| Check | Result |
-| --- | --- |
-| Core: `bun run script/test.ts test/kidunexus.test.ts test/kidunexus-integration.test.ts test/agent.test.ts test/tool-subagent.test.ts` | 42 passed, 290 assertions |
-| TUI: `bun test --timeout 30000 test/component/nexus-progress.test.tsx test/component/nexus-split-grid.test.tsx test/component/dialog-nexus-setup.test.tsx test/component/nexus-workspace.test.tsx` | 11 passed, 58 assertions |
-| Client: `bun run generate` | Passed |
-| Repository: `bun run check` | Passed |
-| Repository: `git diff --check` | Passed |
+| Check                                                                                                                                                                                              | Result                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| Core: `bun run script/test.ts test/kidunexus.test.ts test/kidunexus-integration.test.ts test/agent.test.ts test/tool-subagent.test.ts`                                                             | 42 passed, 290 assertions |
+| TUI: `bun test --timeout 30000 test/component/nexus-progress.test.tsx test/component/nexus-split-grid.test.tsx test/component/dialog-nexus-setup.test.tsx test/component/nexus-workspace.test.tsx` | 11 passed, 58 assertions  |
+| Client: `bun run generate`                                                                                                                                                                         | Passed                    |
+| Repository: `bun run check`                                                                                                                                                                        | Passed                    |
+| Repository: `git diff --check`                                                                                                                                                                     | Passed                    |
 
 Live-provider reasoning quality and an installed-terminal smoke test were not measured. The live-stream and keyboard checks above use the real TUI components with deterministic server fixtures.

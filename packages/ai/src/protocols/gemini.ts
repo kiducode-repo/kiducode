@@ -451,9 +451,6 @@ const lowerMessages = Effect.fnUntraced(function* (request: LLMRequest) {
   }
 
   flushMedia()
-  if (contents.at(-1)?.role === "model") {
-    contents.push({ role: "user", parts: [{ text: "Continue" }] })
-  }
   return contents
 })
 

@@ -37,7 +37,7 @@ export const Info = Schema.Struct({
   max_total_tokens: Schema.Int.check(Schema.isBetween({ minimum: 1000, maximum: 2_000_000 })).pipe(optional),
   max_estimated_cost_usd: Schema.Finite.check(Schema.isBetween({ minimum: 0, maximum: 100 })).pipe(optional),
   max_output_tokens: Schema.Int.check(Schema.isBetween({ minimum: 256, maximum: 16000 })).pipe(optional),
-  max_worker_steps: Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 10 })).pipe(optional),
+  max_worker_steps: Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 30 })).pipe(optional),
   allow_execution: Schema.Boolean.pipe(optional),
   cross_pollination: Schema.Boolean.pipe(optional),
   independent_verification: Schema.Boolean.pipe(optional),

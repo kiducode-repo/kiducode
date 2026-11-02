@@ -66,3 +66,50 @@ test("judge actions appear only at the human decision boundary", async () => {
     app.renderer.destroy()
   }
 })
+
+test("split grid formats structured findings into chat speech by default and shows raw logs in logs mode", async () => {
+  const jsonFindings = JSON.stringify({
+    summary: "Propose decentralized architecture",
+    hypotheses: [{ text: "Improves latency", sources: ["doc.md"] }],
+    evidence: [{ excerpt: "Latency dropped 40%", source: "bench.log" }],
+    challenges: [{ target: "centralized", reason: "Single point of failure" }],
+    unresolved: ["Network partition risk"],
+  })
+  const [mode, setMode] = createSignal<"chat" | "logs">("chat")
+  const panes: NexusPane[] = [
+    {
+      id: "agent1",
+      sessionID: "child1",
+      role: "proponent",
+      model: "test/model",
+      status: "completed",
+      tokens: 100,
+      text: `[tool: read · completed]\n${jsonFindings}`,
+    },
+  ]
+  const app = await testRender(() => <NexusSplitGrid panes={panes} width={80} height={20} viewMode={mode()} />, {
+    width: 80,
+    height: 20,
+  })
+  try {
+    await app.renderOnce()
+    const chatFrame = app.captureCharFrame()
+    expect(chatFrame).toContain("💬 Position:")
+    expect(chatFrame).toContain("Propose decentralized architecture")
+    expect(chatFrame).toContain("📌 Core Arguments:")
+    expect(chatFrame).toContain("Improves latency (doc.md)")
+    expect(chatFrame).toContain("⚔️ Challenges to Peer:")
+    expect(chatFrame).toContain("To centralized:")
+    expect(chatFrame).toContain("failure")
+    expect(chatFrame).not.toContain('{"summary"')
+
+    setMode("logs")
+    await app.renderOnce()
+    const logsFrame = app.captureCharFrame()
+    expect(logsFrame).toContain('{"summary":"Propose decentralized')
+    expect(logsFrame).toContain("architecture")
+    expect(logsFrame).not.toContain("💬 Position:")
+  } finally {
+    app.renderer.destroy()
+  }
+})
