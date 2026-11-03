@@ -33,7 +33,7 @@ jobs:
           - os: macos-latest
             target_os: darwin
             target_arch: arm64
-          - os: macos-13
+          - os: macos-latest
             target_os: darwin
             target_arch: x64
           - os: windows-latest
@@ -83,7 +83,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd packages/cli
-          bun run ./script/build.ts --single --skip-install
+          if [ "${{ matrix.target_os }}" = "darwin" ] && [ "${{ matrix.target_arch }}" = "x64" ]; then
+            bun run ./script/build.ts --target=kiducode-darwin-x64 --skip-install
+          else
+            bun run ./script/build.ts --single --skip-install
+          fi
 
       - name: Package & Upload Linux Binary
         if: matrix.target_os == 'linux'
