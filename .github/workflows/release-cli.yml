@@ -1,0 +1,128 @@
+name: Release CLI Binaries
+
+# Builds KiduCode CLI for all platforms and uploads binaries to the GitHub Release.
+# This enables: curl -fsSL https://kiducode.com/install | bash
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach binaries to (e.g. v1.0.3 or v2.0.0)"
+        required: true
+        default: "v1.0.3"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target_os: linux
+            target_arch: x64
+          - os: ubuntu-24.04-arm
+            target_os: linux
+            target_arch: arm64
+          - os: macos-latest
+            target_os: darwin
+            target_arch: arm64
+          - os: macos-13
+            target_os: darwin
+            target_arch: x64
+          - os: windows-latest
+            target_os: windows
+            target_arch: x64
+
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.target_os }}-${{ matrix.target_arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building version: $VERSION (tag: $TAG)"
+
+      - name: Ensure Release Exists
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release view "$TAG" || gh release create "$TAG" --title "KiduCode $TAG" --notes "Release $TAG" || true
+
+      - name: Build CLI binary
+        shell: bash
+        env:
+          OPENCODE_VERSION: ${{ steps.version.outputs.version }}
+          OPENCODE_RELEASE: "1"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd packages/cli
+          bun run ./script/build.ts --single --skip-install
+
+      - name: Package & Upload Linux Binary
+        if: matrix.target_os == 'linux'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ARCH: ${{ matrix.target_arch }}
+        run: |
+          cd packages/cli/dist/cli-linux-$ARCH/bin
+          chmod +x kiducode
+          tar -czf ../../../../kiducode-linux-$ARCH.tar.gz kiducode
+          cd ../../../..
+          sha256sum kiducode-linux-$ARCH.tar.gz > kiducode-linux-$ARCH.tar.gz.sha256
+          gh release upload "$TAG" kiducode-linux-$ARCH.tar.gz kiducode-linux-$ARCH.tar.gz.sha256 --clobber --repo ${{ github.repository }}
+
+      - name: Package & Upload macOS Binary
+        if: matrix.target_os == 'darwin'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ARCH: ${{ matrix.target_arch }}
+        run: |
+          cd packages/cli/dist/cli-darwin-$ARCH/bin
+          chmod +x kiducode
+          zip -q ../../../../kiducode-darwin-$ARCH.zip kiducode
+          cd ../../../..
+          shasum -a 256 kiducode-darwin-$ARCH.zip > kiducode-darwin-$ARCH.zip.sha256
+          gh release upload "$TAG" kiducode-darwin-$ARCH.zip kiducode-darwin-$ARCH.zip.sha256 --clobber --repo ${{ github.repository }}
+
+      - name: Package & Upload Windows Binary
+        if: matrix.target_os == 'windows'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          Compress-Archive -Path packages/cli/dist/cli-windows-x64/bin/kiducode.exe -DestinationPath kiducode-windows-x64.zip -Force
+          $hash = (Get-FileHash kiducode-windows-x64.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  kiducode-windows-x64.zip" | Out-File -Encoding ascii kiducode-windows-x64.zip.sha256
+          gh release upload $env:TAG kiducode-windows-x64.zip kiducode-windows-x64.zip.sha256 --clobber --repo ${{ github.repository }}
