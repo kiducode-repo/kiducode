@@ -84,7 +84,7 @@ jobs:
         run: |
           cd packages/cli
           if [ "${{ matrix.target_os }}" = "darwin" ] && [ "${{ matrix.target_arch }}" = "x64" ]; then
-            bun run ./script/build.ts --target=kiducode-darwin-x64 --skip-install
+            bun run ./script/build.ts --target=kiducode-darwin-x64
           else
             bun run ./script/build.ts --single --skip-install
           fi
