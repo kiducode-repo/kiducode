@@ -142,7 +142,6 @@ const make = Effect.gen(function* () {
   const appProcess = yield* AppProcess.Service
   const flock = yield* EffectFlock.Service
   const installedVersion = yield* Ref.make(OPENCODE_VERSION)
-  const channel = OPENCODE_CHANNEL.replace(/[^a-zA-Z0-9._-]/g, "-")
   const executable = yield* fs.realPath(process.execPath).pipe(Effect.orElseSucceed(() => process.execPath))
   const installedPackage = yield* Effect.gen(function* () {
     const directory = path.dirname(path.dirname(executable))
@@ -189,11 +188,20 @@ const make = Effect.gen(function* () {
 
   const curlPath = path.resolve(
     global.home,
+    ".kiducode",
+    "bin",
+    process.platform === "win32" ? "kiducode.exe" : "kiducode",
+  )
+  const legacyCurlPath = path.resolve(
+    global.home,
     ".opencode",
     "bin",
     process.platform === "win32" ? "opencode.exe" : "opencode",
   )
-  const curlBinary = yield* fs.realPath(curlPath).pipe(Effect.orElseSucceed(() => curlPath))
+  const curlBinary =
+    (yield* fs.realPath(curlPath).pipe(Effect.orElseSucceed(() => undefined))) ??
+    (yield* fs.realPath(legacyCurlPath).pipe(Effect.orElseSucceed(() => undefined))) ??
+    curlPath
 
   // On Windows a bare `bash` may be the WSL launcher, which cannot run the installer against Windows paths.
   const installerBash = Effect.fnUntraced(function* () {
@@ -204,9 +212,9 @@ const make = Effect.gen(function* () {
     if (bash && (yield* fs.exists(bash).pipe(Effect.orElseSucceed(() => false)))) return bash
     return yield* Effect.fail(
       new UpgradeError({
-        title: "Git Bash is required to update OpenCode",
-        detail: "The OpenCode installer runs with Git Bash on Windows, and it was not found.",
-        retry: "Install Git for Windows or set OPENCODE_GIT_BASH_PATH, then run opencode upgrade again.",
+        title: "Git Bash is required to update KiduCode",
+        detail: "The KiduCode installer runs with Git Bash on Windows, and it was not found.",
+        retry: "Install Git for Windows or set OPENCODE_GIT_BASH_PATH, then run kiducode upgrade again.",
       }),
     )
   })
@@ -215,7 +223,7 @@ const make = Effect.gen(function* () {
     if (executable === curlBinary) return "curl"
     if (installedFormula) return "brew"
     if (installedWinget) return "winget"
-    if (!installedPackage) return
+    if (!installedPackage) return "curl"
 
     const parts = executable.toLowerCase().split(path.sep).map((part) => part.replace(/^\./, ""))
     const checks: Array<{ method: Method; command: string[] }> = [
@@ -273,25 +281,27 @@ const make = Effect.gen(function* () {
   }
 
   const release = Effect.fnUntraced(function* (method?: Method) {
-    const distribution = method === "brew" ? "homebrew" : "npm"
-    // Homebrew Core builds its formula on its own schedule, so the tap release does not describe it.
-    const core = method === "brew" && installedFormula === "opencode"
+    const core = method === "brew" && (installedFormula === "kiducode" || installedFormula === "opencode")
     const response = yield* Effect.tryPromise({
       try: (signal) =>
         fetch(
           core
-            ? "https://formulae.brew.sh/api/formula/opencode.json"
-            : `https://opencode.ai/update/api/${encodeURIComponent(channel)}/${encodeURIComponent(OPENCODE_ARTIFACT)}/${distribution}?current=${encodeURIComponent(OPENCODE_VERSION)}`,
+            ? `https://formulae.brew.sh/api/formula/${encodeURIComponent(installedFormula ?? "kiducode")}.json`
+            : "https://api.github.com/repos/kiducode-repo/kiducode/releases/latest",
           {
             signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
+            headers: {
+              "User-Agent": `kiducode/${OPENCODE_VERSION}`,
+              Accept: "application/vnd.github.v3+json",
+            },
           },
         ),
       catch: (cause) =>
         new UpgradeError(
           {
-            title: "Could not check for OpenCode updates",
+            title: "Could not check for KiduCode updates",
             detail: errorDetail(cause),
-            retry: "Check your network, then run opencode upgrade again.",
+            retry: "Check your network, then run kiducode upgrade again.",
           },
           { cause },
         ),
@@ -299,30 +309,30 @@ const make = Effect.gen(function* () {
     if (!response.ok)
       return yield* Effect.fail(
         new UpgradeError({
-          title: "Could not check for OpenCode updates",
+          title: "Could not check for KiduCode updates",
           detail: `The update service returned HTTP ${response.status}.`,
           retry: "Try again in a few minutes.",
         }),
       )
-    const data: { version?: string; metadata?: { package?: string }; versions?: { stable?: string } } =
+    const data: { tag_name?: string; version?: string; metadata?: { package?: string }; versions?: { stable?: string } } =
       yield* Effect.tryPromise({
         try: () => response.json(),
         catch: (cause) =>
           new UpgradeError(
             {
-              title: "Could not read the OpenCode update information",
+              title: "Could not read the KiduCode update information",
               detail: errorDetail(cause),
               retry: "Try again in a few minutes.",
             },
             { cause },
           ),
       })
-    const version = core ? data.versions?.stable : data.version
-    const packageName = core ? "opencode" : data.metadata?.package
-    if (!version || !packageName)
+    const version = core ? data.versions?.stable : data.tag_name ? data.tag_name.replace(/^v/, "") : data.version
+    const packageName = core ? (installedFormula ?? "kiducode") : (data.metadata?.package ?? "kiducode")
+    if (!version)
       return yield* Effect.fail(
         new UpgradeError({
-          title: "Could not read the OpenCode update information",
+          title: "Could not read the KiduCode update information",
           detail: "The update service returned incomplete release information.",
           retry: "Try again in a few minutes.",
         }),
@@ -479,18 +489,24 @@ const make = Effect.gen(function* () {
           const installer = path.join(directory, "install")
           yield* runUpgrade({
             method,
-            command: ["curl", "-fsSL", "-o", installer, "https://opencode.ai/v2/install"],
-            displayCommand: ["curl", "-fsSL", "https://opencode.ai/v2/install"],
-            title: "Could not download the OpenCode installer",
-            retry: "Check your network, then run opencode upgrade again.",
+            command: [
+              "curl",
+              "-fsSL",
+              "-o",
+              installer,
+              "https://raw.githubusercontent.com/kiducode-repo/kiducode/main/install",
+            ],
+            displayCommand: ["curl", "-fsSL", "https://kiducode.com/install"],
+            title: "Could not download the KiduCode installer",
+            retry: "Check your network, then run kiducode upgrade again.",
           })
           return yield* retaining(
             method,
             runUpgrade({
               method,
               command: [bash, installer, "--version", version, "--no-modify-path"],
-              displayCommand: ["opencode", "upgrade", version, "--method", "curl"],
-              title: "The OpenCode installer failed",
+              displayCommand: ["kiducode", "upgrade", version, "--method", "curl"],
+              title: "The KiduCode installer failed",
             }),
           )
         }
@@ -556,7 +572,7 @@ const make = Effect.gen(function* () {
       yield* Effect.logInfo("update check done", { action: "up-to-date" })
       return undefined
     }
-    yield* Effect.logInfo("OpenCode update available", { current, latest: version, action: next })
+    yield* Effect.logInfo("KiduCode update available", { current, latest: version, action: next })
     return { policy, version }
   })
 
@@ -569,7 +585,7 @@ const make = Effect.gen(function* () {
     const current = yield* Ref.get(installedVersion)
     yield* upgrade(detected, version)
     yield* Ref.set(installedVersion, version)
-    yield* Effect.logInfo("updated OpenCode", { from: current, to: version, method: detected })
+    yield* Effect.logInfo("updated KiduCode", { from: current, to: version, method: detected })
     return true
   })
 

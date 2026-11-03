@@ -39,6 +39,7 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
     const [notifications, markNotification] = useStorage().store<{ versions: string[] }>("update-notifications", {
       initial: { versions: [] },
     })
+    let prompted = false
 
     const notify = (notice: Notice) => {
       if (!props.updater) return
@@ -54,6 +55,14 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
         if (notice.source === "server" && current?.source === "client") return current
         return notice
       })
+
+      // When a new version is available for the client, prompt the user once with the update dialog
+      if (notice.type === "available" && (notice.source === "client" || !notice.remote) && !prompted) {
+        prompted = true
+        setTimeout(() => {
+          open("notification")
+        }, 100)
+      }
     }
 
     const dismiss = () => {

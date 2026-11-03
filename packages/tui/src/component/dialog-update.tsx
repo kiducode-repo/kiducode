@@ -137,7 +137,9 @@ export function DialogUpdate(props: {
             </Match>
             <Match when={current.type === "available"}>
               <text fg={theme.text.muted}>
-                An update is available. After installing, you'll be prompted to restart KiduCode.
+                {"version" in current && current.version
+                  ? `A new version of KiduCode is available (v${current.version}). Would you like to update now?`
+                  : "An update is available. Would you like to update now?"}
               </text>
             </Match>
             <Match when={current.type === "installing"}>
