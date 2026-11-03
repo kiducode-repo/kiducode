@@ -86,8 +86,8 @@ export const GoogleAntigravityPlugin = define({
       return yield* availableModels(value.access, accountProject)
     })
     catalog.data = yield* discover().pipe(
-      Effect.catch((error) =>
-        Effect.logWarning("failed to discover Antigravity account models", { error }).pipe(
+      Effect.catchCause((cause) =>
+        Effect.logWarning("failed to discover Antigravity account models", { cause }).pipe(
           Effect.as([...stableModels] as AntigravityModel[]),
         ),
       ),
@@ -123,10 +123,10 @@ export const GoogleAntigravityPlugin = define({
         discover().pipe(
           Effect.tap((models) => Effect.sync(() => (catalog.data = models))),
           Effect.andThen(ctx.provider.reload()),
-          Effect.catch((error) =>
+          Effect.catchCause((cause) =>
             Effect.sync(() => (catalog.data = [...stableModels])).pipe(
               Effect.andThen(ctx.provider.reload()),
-              Effect.andThen(Effect.logWarning("failed to refresh Antigravity account models", { error })),
+              Effect.andThen(Effect.logWarning("failed to refresh Antigravity account models", { cause })),
             ),
           ),
         ),
@@ -254,7 +254,10 @@ function availableModels(access: string, accountProject: string) {
   }).pipe(
     Effect.flatMap((response) =>
       response.ok
-        ? Effect.promise(() => response.json() as Promise<AvailableModelsResponse>)
+        ? Effect.tryPromise({
+            try: () => response.json() as Promise<AvailableModelsResponse>,
+            catch: () => new Error("Failed to parse Antigravity models response"),
+          })
         : Effect.fail(new Error(`Antigravity model discovery failed (${response.status})`)),
     ),
     Effect.map(accountModels),
@@ -413,7 +416,11 @@ function authorizationURL(redirect: string, challenge: string, state: string) {
 
 function project(access: string, cache: Map<string, Promise<string>>) {
   const existing = cache.get(access)
-  if (existing) return Effect.promise(() => existing)
+  if (existing)
+    return Effect.tryPromise({
+      try: () => existing,
+      catch: (error) => (error instanceof Error ? error : new Error(String(error))),
+    })
   const pending = fetch("https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist", {
     method: "POST",
     headers: {
@@ -438,7 +445,10 @@ function project(access: string, cache: Map<string, Promise<string>>) {
       throw error
     })
   cache.set(access, pending)
-  return Effect.promise(() => pending)
+  return Effect.tryPromise({
+    try: () => pending,
+    catch: (error) => (error instanceof Error ? error : new Error(String(error))),
+  })
 }
 
 export function routeModel(model: string) {
