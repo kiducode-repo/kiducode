@@ -101,7 +101,7 @@ export const GoogleAntigravityPlugin = define({
           package: "@opencode/ai/providers/google",
           settings: {
             apiKey: "kiducode-oauth",
-            baseURL: "https://cloudcode-pa.googleapis.com/v1internal",
+            baseURL: "https://daily-cloudcode-pa.googleapis.com/v1internal",
           },
         },
         models: catalog.data.map((model) => ({
@@ -151,9 +151,8 @@ export const GoogleAntigravityPlugin = define({
         headers.delete("x-goog-user-project")
         headers.delete("x-goog-api-key")
         const accountProject = yield* project(value.access, projects)
-        const url = new URL(
-          event.request.url.replace("cloudcode-pa.googleapis.com", "daily-cloudcode-pa.googleapis.com"),
-        )
+        const url = new URL(event.request.url)
+        url.host = "daily-cloudcode-pa.googleapis.com"
         const match = url.pathname.match(/\/models\/([^:]+)/)
         const model = routeModel(match?.[1] ?? "gemini-3.1-pro-low")
         url.pathname = url.pathname.replace(/\/models\/[^:]+/, "")
@@ -458,7 +457,8 @@ export function routeModel(model: string) {
 
 export function prepareRequest(input: unknown, model: string) {
   if (!input || typeof input !== "object" || Array.isArray(input)) return {}
-  const request = structuredClone(input) as Record<string, unknown>
+  const raw = JSON.stringify(input).replaceAll("tools.opencode", "tools.kiducode")
+  const request = JSON.parse(raw) as Record<string, unknown>
   if (Array.isArray(request.contents) && request.contents.length > 0) {
     const last = request.contents[request.contents.length - 1]
     if (last && typeof last === "object" && (last as { role?: string }).role === "model") {

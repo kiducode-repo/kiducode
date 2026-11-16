@@ -242,12 +242,17 @@ function runtime(inventory: Inventory) {
   for (const namespace of inventory.namespaces?.values() ?? []) getNode(root, namespace.name).namespace = namespace
   for (const [name, registration] of inventory.tools) {
     const child = definition(registration)
-    getNode(root, qualifiedName(registration)).tool = Tool.make({
+    const toolDef = Tool.make({
       description: child.description,
       input: child.inputSchema,
       output: child.outputSchema ?? Schema.NullOr(Schema.String),
       execute: (input) => Run.use((run) => run.executeTool(name, registration, input)),
     })
+    const qname = qualifiedName(registration)
+    getNode(root, qname).tool = toolDef
+    if (qname.startsWith("kiducode.")) {
+      getNode(root, `opencode.${qname.slice("kiducode.".length)}`).tool = toolDef
+    }
   }
   const tools = renderTools(root)
   const created = CodeMode.make<typeof tools>({ tools, extensions: [CodeModeWeb.extension], hooks: runHooks })

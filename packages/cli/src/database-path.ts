@@ -6,7 +6,7 @@ export function databasePath(data: string) {
   const configured = process.env.KIDUCODE_DB ?? process.env.OPENCODE_DB
   const channel = OPENCODE_CHANNEL.replace(/[^a-zA-Z0-9._-]/g, "-")
   const unversioned =
-    ["latest", "dev", "beta", "next", "prod"].includes(OPENCODE_CHANNEL) ||
+    ["latest", "dev", "beta", "next", "prod", "main"].includes(OPENCODE_CHANNEL) ||
     process.env.OPENCODE_DISABLE_CHANNEL_DB === "1" ||
     process.env.OPENCODE_DISABLE_CHANNEL_DB === "true"
   const filename = configured ?? (unversioned ? "kiducode.db" : `kiducode-${channel}.db`)
