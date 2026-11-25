@@ -1,13 +1,9 @@
-import { createResource } from "solid-js"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { useLanguage } from "@/runtime/i18n/language"
 import { usePlatform } from "@/runtime/platform/platform"
 import { ExternalLink } from "@/runtime/platform/external-link"
 import { showToast } from "@/shell/notifications/toast"
-import legal from "./legal.svg"
-import anomalyBrush from "./anomaly-brush.svg"
 import { AnimatedWordmark } from "./animated-wordmark"
-import { FALLBACK_OTHER_CONTRIBUTORS, loadOtherContributorCount } from "./contributors"
 
 const writers = [
   "thdxr",
@@ -35,26 +31,11 @@ export function SettingsAbout(props: { active: boolean }) {
   const platform = usePlatform()
   const dialog = useDialog()
 
-  const [otherContributors] = createResource(
-    () => props.active || undefined,
-    () => loadOtherContributorCount(platform.fetch ?? fetch),
-    { initialValue: FALLBACK_OTHER_CONTRIBUTORS },
-  )
-
   const credit = (name: string) => (
     <bdi dir="ltr">
       <ExternalLink href={profile(name)}>{name}</ExternalLink>
     </bdi>
   )
-
-  const writerCredits = () => [
-    ...writers.map(credit),
-    <ExternalLink href="https://github.com/anomalyco/opencode/graphs/contributors">
-      {language.plural("settings.about.otherContributor", otherContributors.latest, {
-        count: otherContributors.latest,
-      })}
-    </ExternalLink>,
-  ]
 
   const showNotices = async () => {
     // The license texts load only when someone reads them.
@@ -83,7 +64,17 @@ export function SettingsAbout(props: { active: boolean }) {
       <AnimatedWordmark active={props.active} />
 
       <div class="settings-about-credits">
-        <p>{language.rich("settings.about.writtenByNames", { names: language.list(writerCredits()) })}</p>
+        <p>
+          <ExternalLink href="https://github.com/kiducode-repo/kiducode/graphs/contributors">
+            {language.t("settings.about.projectContributors")}
+          </ExternalLink>
+        </p>
+        <p>
+          <ExternalLink href="https://github.com/anomalyco/opencode">
+            {language.t("settings.about.upstreamCredits")}
+          </ExternalLink>
+        </p>
+        <p>{language.rich("settings.about.writtenByNames", { names: language.list(writers.map(credit)) })}</p>
         <p>
           {language.rich("settings.about.illustratedByNames", {
             names: language.list(illustrators.map(credit)),
@@ -91,33 +82,20 @@ export function SettingsAbout(props: { active: boolean }) {
         </p>
       </div>
 
-      <div class="settings-about-publication">
-        <p>{language.t("settings.about.firstPublished")}</p>
-        <p>{language.t("settings.about.firstIllustrated")}</p>
-      </div>
-
       <p class="settings-about-faint">
-        <ExternalLink href="https://opencode.ai">
-          <bdi dir="ltr">{language.t("settings.about.website")}</bdi>
+        <ExternalLink href="https://github.com/kiducode-repo/kiducode">
+          <bdi dir="ltr">{language.t("settings.about.repository")}</bdi>
         </ExternalLink>
       </p>
 
       <div class="settings-about-details">
-        <p>{language.t("settings.about.description")}</p>
-        <p>{language.t("settings.about.trademark")}</p>
+        <p>{language.t("settings.about.projectDescription")}</p>
         <p>{language.t("settings.about.typeset")}</p>
         <p>
           <button type="button" class="settings-about-link" onClick={() => void showNotices()}>
             {language.t("settings.about.notices.title")}
           </button>
         </p>
-      </div>
-
-      <p>{language.t("settings.about.tagline")}</p>
-      <img class="settings-about-legal" src={legal} alt="" />
-      <div class="settings-about-copyright">
-        <p>{language.t("settings.about.copyright")}</p>
-        <img class="settings-about-anomaly-brush" src={anomalyBrush} alt="" />
       </div>
     </div>
   )

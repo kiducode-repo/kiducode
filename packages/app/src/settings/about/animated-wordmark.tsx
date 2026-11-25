@@ -1,12 +1,9 @@
 import { createEffect, For, on, onCleanup } from "solid-js"
 import { createStore } from "solid-js/store"
-
-const target = ["o", "p", "e", "n", "c", "o", "d", "e"] as const
-
-const choices = ["o", "p", "e", "n", "c", "d"] as const
+import { glyphs, letters } from "@opencode/ui/logo"
 
 export function AnimatedWordmark(props: { active: boolean }) {
-  const [state, setState] = createStore({ letters: [...target] })
+  const [state, setState] = createStore({ letters: [...letters] })
   const timers = new Set<ReturnType<typeof setTimeout>>()
 
   createEffect(
@@ -17,13 +14,13 @@ export function AnimatedWordmark(props: { active: boolean }) {
         timers.clear()
 
         if (!active || matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          setState("letters", [...target])
+          setState("letters", [...letters])
 
           return
         }
 
-        const starts = target.map(() => choices[Math.floor(Math.random() * choices.length)])
-        const settles = target.map(() => 6 + Math.floor(Math.random() * 8))
+        const starts = letters.map(() => letters[Math.floor(Math.random() * letters.length)])
+        const settles = letters.map(() => 6 + Math.floor(Math.random() * 8))
         const last = Math.max(...settles)
         setState("letters", starts)
 
@@ -31,8 +28,8 @@ export function AnimatedWordmark(props: { active: boolean }) {
           const timer = setTimeout(() => {
             setState(
               "letters",
-              target.map((letter, index) =>
-                tick >= settles[index] ? letter : choices[Math.floor(Math.random() * choices.length)],
+              letters.map((letter, index) =>
+                tick >= settles[index] ? letter : letters[Math.floor(Math.random() * letters.length)],
               ),
             )
             timers.delete(timer)
@@ -48,35 +45,12 @@ export function AnimatedWordmark(props: { active: boolean }) {
 
   return (
     <svg class="settings-about-wordmark" viewBox="0 0 234 42" aria-hidden="true">
-      <defs>
-        <symbol id="settings-about-letter-o" viewBox="0 0 24 42">
-          <path class="settings-about-letter-shadow" d="M18 30H6V18H18V30Z" />
-          <path d="M18 12H6V30H18V12ZM24 36H0V6H24V36Z" />
-        </symbol>
-        <symbol id="settings-about-letter-p" viewBox="0 0 24 42">
-          <path class="settings-about-letter-shadow" d="M18 30H6V18H18V30Z" />
-          <path d="M6 30H18V12H6V30ZM24 36H6V42H0V6H24V36Z" />
-        </symbol>
-        <symbol id="settings-about-letter-e" viewBox="0 0 24 42">
-          <path class="settings-about-letter-shadow" d="M24 24V30H6V24H24Z" />
-          <path d="M24 24H6V30H24V36H0V6H24V24ZM6 18H18V12H6V18Z" />
-        </symbol>
-        <symbol id="settings-about-letter-n" viewBox="0 0 24 42">
-          <path class="settings-about-letter-shadow" d="M18 36H6V18H18V36Z" />
-          <path d="M18 12H6V36H0V6H18V12ZM24 36H18V12H24V36Z" />
-        </symbol>
-        <symbol id="settings-about-letter-c" viewBox="0 0 24 42">
-          <path class="settings-about-letter-shadow" d="M24 30H6V18H24V30Z" />
-          <path d="M24 12H6V30H24V36H0V6H24V12Z" />
-        </symbol>
-        <symbol id="settings-about-letter-d" viewBox="0 0 24 42">
-          <path class="settings-about-letter-shadow" d="M18 30H6V18H18V30Z" />
-          <path d="M18 12H6V30H18V12ZM24 36H0V6H18V0H24V36Z" />
-        </symbol>
-      </defs>
       <For each={state.letters}>
         {(letter, index) => (
-          <use href={`#settings-about-letter-${letter}`} x={index() * 30} width="24" height="42" />
+          <g transform={`translate(${index() * 30} 3)`}>
+            <path class="settings-about-letter-shadow" d={glyphs[letter].shade} />
+            <path d={glyphs[letter].face} />
+          </g>
         )}
       </For>
     </svg>

@@ -43,7 +43,9 @@ export const layer = Layer.effect(
       const home = app.getPath("home")
       yield* runInstaller(cli.binary, home)
 
-      return path.join(home, ".opencode", "bin", "opencode")
+      const bin =
+        process.env.KIDUCODE_INSTALL_DIR || process.env.OPENCODE_INSTALL_DIR || path.join(home, ".kiducode", "bin")
+      return path.join(bin, "kiducode")
     })
 
     return Service.of({ resolve, install })

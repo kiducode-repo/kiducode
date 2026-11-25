@@ -13,8 +13,6 @@ const sandboxes = Array.from({ length: 12 }, (_, index) => `${directory}/workspa
 const override =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' fill='red'/%3E%3C/svg%3E"
 
-const contributors = "https://api.github.com/repos/anomalyco/opencode/contributors?anon=1&per_page=1"
-
 test.use({ serviceWorkers: "block" })
 
 // One project with 12 worktrees, each with one session, and a configured zsh shell.
@@ -444,45 +442,23 @@ test.describe("pages open before slow data", () => {
     await expect(settings.getByRole("switch", { name: "demo-mcp" })).toBeChecked()
   })
 
-  for (const fails of [false, true]) {
-    test(`about ${fails ? "keeps its fallback when contributors fail" : "updates contributors later"}`, async ({
-      page,
-    }) => {
-      const { settings } = await open(page)
-      const gate = Promise.withResolvers<void>()
-      await page.route(contributors, async (route) => {
-        await gate.promise
-
-        if (fails) return route.abort("failed")
-        await route.fulfill({
-          json: [],
-          headers: {
-            "access-control-allow-origin": "*",
-            "access-control-expose-headers": "Link",
-            Link: `<${contributors}&page=1004>; rel="last"`,
-          },
-        })
-      })
-      const requested = page.waitForRequest(contributors)
-      await settings.getByRole("tab", { name: "About", exact: true }).click()
-      await requested
-      await expect(settings.getByText("Released under the MIT License", { exact: true })).toBeVisible()
-      await expect(settings.getByRole("link", { name: "935 others", exact: true })).toBeVisible()
-      await expect(settings.getByRole("button", { name: "Back to app" })).toBeVisible()
-
-      const website = settings.getByRole("link", { name: "www.opencode.ai", exact: true })
-      await website.focus()
-
-      const settled = fails
-        ? page.waitForEvent("requestfailed", (request) => request.url() === contributors)
-        : page.waitForResponse(contributors)
-
-      gate.resolve()
-      await settled
-      await expect(settings.getByRole("link", { name: fails ? "935 others" : "988 others", exact: true })).toBeVisible()
-      await expect(website).toBeFocused()
-    })
-  }
+  test("about links to the KiduCode project and its upstream credits", async ({ page }) => {
+    const { settings } = await open(page)
+    await settings.getByRole("tab", { name: "About", exact: true }).click()
+    await expect(settings.getByText("Released under the MIT License", { exact: true })).toBeVisible()
+    await expect(settings.getByRole("link", { name: "KiduCode on GitHub", exact: true })).toHaveAttribute(
+      "href",
+      "https://github.com/kiducode-repo/kiducode",
+    )
+    await expect(settings.getByRole("link", { name: "KiduCode contributors", exact: true })).toHaveAttribute(
+      "href",
+      "https://github.com/kiducode-repo/kiducode/graphs/contributors",
+    )
+    await expect(settings.getByRole("link", { name: "Original OpenCode credits", exact: true })).toHaveAttribute(
+      "href",
+      "https://github.com/anomalyco/opencode",
+    )
+  })
 })
 
 test("worktrees follow inventory events, wait for session counts, and delete by project", async ({ page }) => {

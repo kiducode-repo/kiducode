@@ -1,6 +1,6 @@
-# OpenCode Desktop
+# KiduCode Desktop
 
-The OpenCode Desktop app, built with Electron.
+The KiduCode Desktop app, built with Electron.
 
 ## Development
 
@@ -40,12 +40,9 @@ CLI preparation uses these channel rules:
 default. `bun dev --download-server <version>` instead downloads that CLI version for local development. Neither path
 requires `OPENCODE_CLI_DIST` or runs the production prebuild.
 
-## Beta channel
+## Releases
 
-Every push to the `beta` branch publishes OpenCode Beta (`ai.opencode.desktop.beta`) as version `0.0.0-beta-<run>` to
-the `beta` update channel. Beta publishes only the desktop app and `beta.opencode.ai`; the CLI and SDK packages ship
-from `dev`. Install it from `https://opencode.ai/download/beta/<platform>`, for example `darwin-aarch64-dmg` or
-`windows-x64-nsis`. Installed builds update in place on every platform.
+Check the [KiduCode releases page](https://github.com/kiducode-repo/kiducode/releases) for published artifacts. To run this Electron app from source, use the development instructions above.
 
 ## Startup benchmark
 

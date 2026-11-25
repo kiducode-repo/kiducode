@@ -1,20 +1,20 @@
 # Figma
 
-An opt-in OpenCode plugin that registers Figma's remote MCP server and official Figma skills. It uses OpenCode's existing OAuth/DCR flow and credential storage, without a shared client secret.
+An opt-in KiduCode plugin that registers Figma's remote MCP server and official Figma skills. It uses OpenCode's existing OAuth/DCR flow and credential storage, without a shared client secret.
 
 ## Install
 
 Install directly from Git:
 
 ```sh
-opencode plugin add 'git+https://github.com/anomalyco/opencode.git#path:packages/plugins/figma'
+kiducode plugin add 'git+https://github.com/kiducode-repo/kiducode.git#path:packages/plugins/figma'
 ```
 
 The URL selects the Figma directory and uses the repository's default branch, so no explicit branch name is needed. Installation is Git-only.
 
 The plugin exports `index.ts` directly. There is no build step or installation hook.
 
-For local development, add the directory to `plugins` in the project's `opencode.jsonc`:
+For local development, add the directory to `plugins` in the project's `kiducode.jsonc`:
 
 ```jsonc
 {
@@ -60,7 +60,7 @@ Sync never runs automatically during installation, plugin startup, typechecking,
 ## Remove
 
 ```sh
-opencode plugin remove 'git+https://github.com/anomalyco/opencode.git#path:packages/plugins/figma'
+kiducode plugin remove 'git+https://github.com/kiducode-repo/kiducode.git#path:packages/plugins/figma'
 ```
 
 If you installed with a different Git specification, pass that same specification to remove it. An independently configured `mcp.servers.figma` entry remains unaffected.

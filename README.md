@@ -1,106 +1,37 @@
-<p align="center">
-  <a href="https://opencode.ai">
-    <picture>
-      <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="OpenCode logo">
-    </picture>
-  </a>
-</p>
-<p align="center">The open source AI coding agent.</p>
-<p align="center">
-  <a href="https://opencode.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
-  <a href="https://www.npmjs.com/package/@opencode/cli"><img alt="npm" src="https://img.shields.io/npm/v/@opencode/cli?style=flat-square" /></a>
-  <a href="https://github.com/anomalyco/opencode/actions/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/publish.yml?style=flat-square&branch=dev" /></a>
-</p>
+# <img src="docs/kiducode-wordmark.svg" alt="KiduCode" width="320">
 
+KiduCode is an open-source AI coding agent built in Kerala. Run it in your terminal to explore a codebase, plan a change, edit files, and run project checks with the model you choose.
 
-[![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
+## Install the CLI
 
----
+Download the archive for your operating system and processor from the [KiduCode releases page](https://github.com/kiducode-repo/kiducode/releases/latest). Releases include macOS and Linux builds for x64 and arm64, and a Windows x64 build.
 
-### Installation
+Extract the archive and put `kiducode` (or `kiducode.exe` on Windows) in a directory on your PATH. From the project you want to work on, run:
 
-```bash
-# YOLO
-curl -fsSL https://opencode.ai/v2/install | bash
-
-# Package managers
-npm i -g @opencode/cli@latest      # or bun/pnpm/yarn
-brew install anomalyco/tap/opencode-v2 # macOS and Linux (recommended, always up to date)
-brew install opencode              # macOS and Linux (official brew formula, updated less)
-sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-beta              # Arch Linux (Latest from AUR)
-mise use -g opencode               # Any OS
-nix run github:anomalyco/opencode  # Nix
+```sh
+kiducode
 ```
 
-> [!TIP]
-> Remove versions older than 0.1.x before installing.
+In the terminal interface, use `/connect` to connect a provider and `/models` to choose a model.
 
-### Desktop App (BETA)
+## Work with the agent
 
-OpenCode is also available as a desktop application. Download it from [opencode.ai/download](https://opencode.ai/download).
+- Use **Plan** to investigate a question and review a proposed change.
+- Use **Build** to edit files and run project checks.
+- Use **Crew** to delegate parts of a larger task to worker agents. See the [Crew guide](docs/crew-mode.md).
+- Enable **KiduNexus** to try experimental workflows with multiple models and human review. See the [KiduNexus guide](docs/kidunexus/README.md).
 
-| Platform              | Download                           |
-| --------------------- | ---------------------------------- |
-| macOS (Apple Silicon) | `opencode-desktop-mac-arm64.dmg`   |
-| macOS (Intel)         | `opencode-desktop-mac-x64.dmg`     |
-| Windows               | `opencode-desktop-win-x64.exe`     |
-| Linux                 | `.deb`, `.rpm`, or `.AppImage`     |
+## Run from source
 
-```bash
-# macOS (Homebrew)
-brew install --cask opencode-desktop
+Install Bun 1.4.4, then run these commands from the repository root:
+
+```sh
+bun install --frozen-lockfile
+bun run dev
 ```
 
-#### Installation Directory
+Pass a project directory to `bun run dev` to open it. For development and testing instructions, see [Contributing to KiduCode](CONTRIBUTING.md). Report CLI bugs and request features in the [KiduCode issue tracker](https://github.com/kiducode-repo/kiducode/issues).
 
-The install script respects the following priority order for the installation path:
+## Project history and license
 
-1. `$OPENCODE_INSTALL_DIR` - Custom installation directory
-2. `$XDG_BIN_DIR` - XDG Base Directory Specification compliant path
-3. `$HOME/bin` - Standard user binary directory (if it exists or can be created)
-4. `$HOME/.opencode/bin` - Default fallback
-
-```bash
-# Examples
-OPENCODE_INSTALL_DIR=/usr/local/bin curl -fsSL https://opencode.ai/v2/install | bash
-XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/v2/install | bash
-```
-
-### Agents
-
-KiduCode includes three primary agents you can switch between with `Shift+Tab`.
-
-- **build** - Default, full-access agent for development work
-- **plan** - Read-only agent for analysis and code exploration
-  - Denies file edits by default
-  - Asks permission before running bash commands
-  - Ideal for exploring unfamiliar codebases or planning changes
-- **crew** - Collaborative, cost-aware coordination across agents and models
-  - Handles simple tasks directly and delegates focused work when useful
-  - Chooses worker models using available models and catalog pricing
-  - Supports parallel independent work and focused review
-  - See [Crew mode](docs/crew-mode.md) for behavior and current limits
-
-Also included is a **general** subagent for complex searches and multistep tasks.
-This is used internally and can be invoked using `@general` in messages.
-
-Learn more about [agents](https://opencode.ai/docs/agents).
-
-### Documentation
-
-For more info on how to configure OpenCode, [**head over to our docs**](https://opencode.ai/docs).
-
-### Contributing
-
-If you're interested in contributing to OpenCode, please read our [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
-
-### Building on OpenCode
-
-If you are working on a project that's related to OpenCode and is using "opencode" as part of its name, for example "opencode-dashboard" or "opencode-mobile", please add a note to your README to clarify that it is not built by the OpenCode team and is not affiliated with us in any way.
-
----
-
-**Join our community** [Discord](https://discord.gg/opencode) | [X.com](https://x.com/opencode)
+KiduCode builds on [OpenCode](https://github.com/anomalyco/opencode) and its contributors' work. The repository includes the upstream commit history, so GitHub's contributor list includes authors from both projects. KiduCode is distributed under the [MIT license](LICENSE).

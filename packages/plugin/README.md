@@ -1,6 +1,6 @@
 # `@opencode/plugin`
 
-Authoring interfaces and runtime loader support for OpenCode V2 plugins:
+Authoring interfaces and runtime loader support for KiduCode V2 plugins:
 
 - `@opencode/plugin` — [Promise plugin API](./src/README.md)
 - `@opencode/plugin/effect` — [Effect plugin API](./src/effect/README.md)

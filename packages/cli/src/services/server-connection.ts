@@ -87,7 +87,7 @@ function connectError(endpoint: Endpoint, cause: unknown) {
   if (isUnauthorizedError(cause)) {
     return new Error(
       endpoint.auth === undefined
-        ? `Server at ${endpoint.url} requires a password; set OPENCODE_PASSWORD`
+        ? `Server at ${endpoint.url} requires a password; set KIDUCODE_PASSWORD`
         : `Server at ${endpoint.url} rejected the password`,
       { cause },
     )
