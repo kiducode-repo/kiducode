@@ -1,0 +1,12 @@
+{
+  "$schema": "https://kiducode.com/config.json",
+  "kidunexus": {
+    "enabled": true,
+    "mode": "adaptive",
+    "max_concurrent_agents": 4,
+    "max_total_tokens": 2000000,
+    "max_task_duration_seconds": 600
+  }
+}
+
+
