@@ -1,4 +1,4 @@
-# <img src="docs/kiducode-wordmark.svg" alt="KiduCode" width="320">
+# <img src="packages/core/src/oauth/kiducode.png" alt="KiduCode" width="420">
 
 KiduCode is an open-source AI coding agent built in Kerala. Run it in your terminal to explore a codebase, plan a change, edit files, and run project checks with the model you choose.
 
