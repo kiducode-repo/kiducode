@@ -34,4 +34,4 @@ Pass a project directory to `bun run dev` to open it. For development and testin
 
 ## Project history and license
 
-KiduCode builds on [OpenCode](https://github.com/anomalyco/opencode) and its contributors' work. The repository includes the upstream commit history, so GitHub's contributor list includes authors from both projects. KiduCode is distributed under the [MIT license](LICENSE).
+KiduCode builds on [OpenCode](https://github.com/anomalyco/opencode) and its contributors' work. Development on `main` uses a fresh KiduCode history. The earlier project and upstream commit history is preserved in [archive-before-reset](https://github.com/kiducode-repo/kiducode/tree/archive-before-reset). KiduCode is distributed under the [MIT license](LICENSE).
